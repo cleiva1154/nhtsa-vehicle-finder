@@ -18,8 +18,8 @@ A vehicle is treated as an SUV/crossover if any of these hold:
 
 NHTSA has no powertrain or seat data. Powertrain comes from fueleconomy.gov,
 or from NHTSA's model name when it states one outright ("... BEV"); otherwise
-it is None and the vehicle is left out of recommendations. Seat counts have
-no source yet, so they stay None rather than being estimated. Those heuristics live in this file and
+it is None and the vehicle is left out of recommendations. Seat counts come
+from NHTSA VIN records (see ``seats.py``) and are None when unknown. Those heuristics live in this file and
 are easy to adjust.
 """
 
@@ -71,7 +71,6 @@ class Vehicle:
     doors: int | None
     cab: str | None              # pickups only: crew|extended|regular
     powertrain: str | None       # gas|diesel|hybrid|plug-in hybrid|electric|fuel cell; None = unknown
-    seats: int | None            # no source wired in yet; never estimated
     vpic_type: str | None        # Passenger Car | MPV | Truck | None
     overall_rating: int | None   # NCAP 1-5 stars, None if not rated
     rollover_risk: float | None  # probability of rollover in single-vehicle crash
@@ -93,6 +92,12 @@ class Vehicle:
     epa_class: str | None = None
     epa_url: str | None = None
     epa_says_suv: bool = False
+
+    # Filled in from NHTSA VIN records by ``seats.apply_seats`` (None = unknown).
+    seats_min: int | None = None
+    seats_max: int | None = None
+    seats_source: str | None = None
+    seats_source_url: str | None = None
 
     @property
     def all_wheel_drive(self) -> bool:
@@ -218,7 +223,6 @@ def make_vehicle(year: int, make: str, model: str, variant: dict, details: dict,
         powertrain=stated_powertrain(model),
         powertrains=[stated_powertrain(model)] if stated_powertrain(model) else [],
         powertrain_source=NCAP_LABEL_SOURCE if stated_powertrain(model) else None,
-        seats=None,
         vpic_type=vpic_type,
         overall_rating=_to_int(details.get("OverallRating")),
         rollover_risk=_to_float(details.get("RolloverPossibility")) or None,
@@ -327,10 +331,11 @@ def save_catalog(vehicles: list[Vehicle], path: str | Path) -> None:
 
 
 def load_catalog(path: str | Path) -> list[Vehicle]:
-    vehicles = [Vehicle(**row) for row in json.loads(Path(path).read_text())]
+    rows = json.loads(Path(path).read_text())
+    for row in rows:
+        row.pop("seats", None)   # older catalogs held estimated seat counts
+    vehicles = [Vehicle(**row) for row in rows]
     # Catalogs saved by older versions hold guessed powertrains and seat
     # counts; drop those.
     reset_powertrains(vehicles)
-    for v in vehicles:
-        v.seats = None
     return vehicles

@@ -28,6 +28,7 @@ from typing import Any
 
 SAFETY_BASE = "https://api.nhtsa.gov/SafetyRatings"
 VPIC_BASE = "https://vpic.nhtsa.dot.gov/api/vehicles"
+COMPLAINTS_BASE = "https://api.nhtsa.gov/complaints"
 
 MPV = "multipurpose passenger vehicle (mpv)"
 
@@ -88,9 +89,11 @@ class NHTSAClient:
             time.sleep(wait)
 
     # ------------------------------------------------------------------ core
-    def _get(self, url: str) -> list[dict[str, Any]]:
-        """GET a NHTSA URL and return its ``Results`` list (cached)."""
-        key = hashlib.sha1(url.encode()).hexdigest()
+    def _get(self, url: str, form: dict[str, str] | None = None,
+             results_key: str = "Results") -> list[dict[str, Any]]:
+        """GET (or POST ``form``) a NHTSA URL; return its results list (cached)."""
+        body = urllib.parse.urlencode(form).encode() if form else None
+        key = hashlib.sha1(url.encode() + (body or b"")).hexdigest()
         cache_file = self.cache_dir / f"{key}.json"
         if cache_file.exists():
             return json.loads(cache_file.read_text())["Results"]
@@ -104,12 +107,12 @@ class NHTSAClient:
             self._wait_turn()
             try:
                 req = urllib.request.Request(
-                    url, headers={"User-Agent": "nhtsa-vehicle-finder/1.0"}
+                    url, data=body, headers={"User-Agent": "nhtsa-vehicle-finder/1.0"}
                 )
                 with urllib.request.urlopen(req, timeout=self.timeout, context=self._ssl) as resp:
                     payload = json.load(resp)
                 self._throttled_streak = 0
-                results = payload.get("Results") or []
+                results = payload.get(results_key) or []
                 cache_file.write_text(json.dumps({"url": url, "Results": results}))
                 return results
             except urllib.error.HTTPError as err:
@@ -152,6 +155,26 @@ class NHTSAClient:
         return rows[0] if rows else {}
 
     # ------------------------------------------------------------------ vPIC
+    def complaint_vins(self, year: int, make: str, model: str) -> list[str]:
+        """Distinct partial (11-character) VINs from NHTSA owner complaints.
+
+        Recent complaint records use the same model names as NCAP
+        ("SIENNA HYBRID", "F-150 (SUPER CREW) GAS").
+        """
+        query = urllib.parse.urlencode({"make": make, "model": model, "modelYear": year})
+        rows = self._get(f"{COMPLAINTS_BASE}/complaintsByVehicle?{query}", results_key="results")
+        vins: list[str] = []
+        for row in rows:
+            vin = (row.get("vin") or "")[:11].upper()
+            if len(vin) == 11 and vin not in vins:
+                vins.append(vin)
+        return vins
+
+    def decode_vins(self, vins: list[str], year: int) -> list[dict[str, Any]]:
+        """vPIC DecodeVINValuesBatch (up to 50 VINs per request)."""
+        data = ";".join(f"{v},{year}" for v in vins)
+        return self._get(f"{VPIC_BASE}/DecodeVINValuesBatch/", form={"data": data, "format": "json"})
+
     def vpic_models(self, make: str, year: int, vehicle_type: str) -> list[str]:
         rows = self._get(
             f"{VPIC_BASE}/GetModelsForMakeYear/make/{self._q(make)}"

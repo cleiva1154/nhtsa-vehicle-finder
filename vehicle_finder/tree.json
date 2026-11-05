@@ -1,124 +1,491 @@
 {
-  "_comment": "Decision tree shared by the Python app and the web page. Each option's 'where' is a condition on a vehicle; {} matches everything. Conditions: {field, in|eq|ne|gte|lte|any_of}, or {all: [conditions]}. A missing (null) value never satisfies a condition.",
+  "_comment": "Decision tree shared by the Python app and the web page. Each option's 'where' is a condition on a vehicle; {} matches everything. Conditions: {field, in|eq|ne|gte|lte|any_of}, or {all: [...]} / {any: [...]}. A missing (null) value never satisfies a condition.",
   "start": "start",
   "questions": {
     "start": {
       "prompt": "What will you mainly use this vehicle for?",
       "options": [
-        {"label": "Commuting and errands", "where": {"field": "body", "in": ["sedan", "hatchback", "wagon"]}, "next": "power"},
-        {"label": "Family of up to 5, with room for gear", "where": {"field": "body", "in": ["sedan", "hatchback", "wagon", "minivan"]}, "next": "family_body"},
-        {"label": "Carrying 6 or more people", "where": {"field": "body", "eq": "minivan"}, "next": "power"},
-        {"label": "Towing, hauling, or work", "where": {"field": "body", "eq": "pickup"}, "next": "cab"},
-        {"label": "Fun / weekend driving", "where": {"field": "body", "in": ["coupe", "convertible"]}, "next": "roof"},
-        {"label": "Not sure, show me everything", "where": {}, "next": "body_any"}
+        {
+          "label": "Commuting and errands",
+          "where": {
+            "field": "body",
+            "in": [
+              "sedan",
+              "hatchback",
+              "wagon"
+            ]
+          },
+          "next": "power"
+        },
+        {
+          "label": "Family of up to 5, with room for gear",
+          "where": {
+            "field": "body",
+            "in": [
+              "sedan",
+              "hatchback",
+              "wagon",
+              "minivan"
+            ]
+          },
+          "next": "family_body"
+        },
+        {
+          "label": "Carrying 6 or more people",
+          "where": {
+            "any": [
+              {
+                "field": "body",
+                "eq": "minivan"
+              },
+              {
+                "field": "seats_min",
+                "gte": 6
+              }
+            ]
+          },
+          "next": "power"
+        },
+        {
+          "label": "Towing, hauling, or work",
+          "where": {
+            "field": "body",
+            "eq": "pickup"
+          },
+          "next": "cab"
+        },
+        {
+          "label": "Fun / weekend driving",
+          "where": {
+            "field": "body",
+            "in": [
+              "coupe",
+              "convertible"
+            ]
+          },
+          "next": "roof"
+        },
+        {
+          "label": "Not sure, show me everything",
+          "where": {},
+          "next": "body_any"
+        }
       ]
     },
     "family_body": {
       "prompt": "Which body style do you prefer?",
       "options": [
-        {"label": "Sedan", "where": {"field": "body", "eq": "sedan"}, "next": "power"},
-        {"label": "Hatchback", "where": {"field": "body", "eq": "hatchback"}, "next": "power"},
-        {"label": "Wagon", "where": {"field": "body", "eq": "wagon"}, "next": "power"},
-        {"label": "Minivan", "where": {"field": "body", "eq": "minivan"}, "next": "power"},
-        {"label": "No preference", "where": {}, "next": "power"}
+        {
+          "label": "Sedan",
+          "where": {
+            "field": "body",
+            "eq": "sedan"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Hatchback",
+          "where": {
+            "field": "body",
+            "eq": "hatchback"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Wagon",
+          "where": {
+            "field": "body",
+            "eq": "wagon"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Minivan",
+          "where": {
+            "field": "body",
+            "eq": "minivan"
+          },
+          "next": "power"
+        },
+        {
+          "label": "No preference",
+          "where": {},
+          "next": "power"
+        }
       ]
     },
     "body_any": {
       "prompt": "Any body style you have in mind?",
       "options": [
-        {"label": "Sedan", "where": {"field": "body", "eq": "sedan"}, "next": "power"},
-        {"label": "Hatchback", "where": {"field": "body", "eq": "hatchback"}, "next": "power"},
-        {"label": "Wagon", "where": {"field": "body", "eq": "wagon"}, "next": "power"},
-        {"label": "Coupe", "where": {"field": "body", "eq": "coupe"}, "next": "power"},
-        {"label": "Convertible", "where": {"field": "body", "eq": "convertible"}, "next": "power"},
-        {"label": "Minivan", "where": {"field": "body", "eq": "minivan"}, "next": "power"},
-        {"label": "Pickup truck", "where": {"field": "body", "eq": "pickup"}, "next": "power"},
-        {"label": "No preference", "where": {}, "next": "power"}
+        {
+          "label": "Sedan",
+          "where": {
+            "field": "body",
+            "eq": "sedan"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Hatchback",
+          "where": {
+            "field": "body",
+            "eq": "hatchback"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Wagon",
+          "where": {
+            "field": "body",
+            "eq": "wagon"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Coupe",
+          "where": {
+            "field": "body",
+            "eq": "coupe"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Convertible",
+          "where": {
+            "field": "body",
+            "eq": "convertible"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Minivan",
+          "where": {
+            "field": "body",
+            "eq": "minivan"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Pickup truck",
+          "where": {
+            "field": "body",
+            "eq": "pickup"
+          },
+          "next": "power"
+        },
+        {
+          "label": "No preference",
+          "where": {},
+          "next": "power"
+        }
       ]
     },
     "cab": {
       "prompt": "What size cab do you need?",
       "options": [
-        {"label": "Crew cab (4 full doors)", "where": {"field": "cab", "eq": "crew"}, "next": "power"},
-        {"label": "Extended cab (small rear seats)", "where": {"field": "cab", "eq": "extended"}, "next": "power"},
-        {"label": "Regular cab (no rear seats)", "where": {"field": "cab", "eq": "regular"}, "next": "power"},
-        {"label": "No preference", "where": {}, "next": "power"}
+        {
+          "label": "Crew cab (4 full doors)",
+          "where": {
+            "field": "cab",
+            "eq": "crew"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Extended cab (small rear seats)",
+          "where": {
+            "field": "cab",
+            "eq": "extended"
+          },
+          "next": "power"
+        },
+        {
+          "label": "Regular cab (no rear seats)",
+          "where": {
+            "field": "cab",
+            "eq": "regular"
+          },
+          "next": "power"
+        },
+        {
+          "label": "No preference",
+          "where": {},
+          "next": "power"
+        }
       ]
     },
     "roof": {
       "prompt": "Do you want a convertible?",
       "options": [
-        {"label": "Yes, a convertible", "where": {"field": "body", "eq": "convertible"}, "next": "rear_seats"},
-        {"label": "No, a hardtop coupe", "where": {"field": "body", "eq": "coupe"}, "next": "rear_seats"},
-        {"label": "Either is fine", "where": {}, "next": "rear_seats"}
+        {
+          "label": "Yes, a convertible",
+          "where": {
+            "field": "body",
+            "eq": "convertible"
+          },
+          "next": "rear_seats"
+        },
+        {
+          "label": "No, a hardtop coupe",
+          "where": {
+            "field": "body",
+            "eq": "coupe"
+          },
+          "next": "rear_seats"
+        },
+        {
+          "label": "Either is fine",
+          "where": {},
+          "next": "rear_seats"
+        }
       ]
     },
     "rear_seats": {
       "prompt": "Do you need back seats?",
       "options": [
-        {"label": "Yes, I need back seats", "where": {"field": "epa_class", "ne": "Two Seaters"}, "next": "power"},
-        {"label": "No, two seats is fine", "where": {}, "next": "power"}
+        {
+          "label": "Yes, I need back seats",
+          "where": {
+            "any": [
+              {
+                "field": "epa_class",
+                "ne": "Two Seaters"
+              },
+              {
+                "field": "seats_min",
+                "gte": 4
+              }
+            ]
+          },
+          "next": "power"
+        },
+        {
+          "label": "No, two seats is fine",
+          "where": {},
+          "next": "power"
+        }
       ]
     },
     "power": {
       "prompt": "What powertrain do you want?",
       "options": [
-        {"label": "Fully electric", "where": {"field": "powertrains", "any_of": ["electric"]}, "next": "ev_range"},
-        {"label": "Hybrid or plug-in hybrid", "where": {"field": "powertrains", "any_of": ["hybrid", "plug-in hybrid"]}, "next": "mpg"},
-        {"label": "Any electrified (hybrid, plug-in, EV, fuel cell)", "where": {"field": "powertrains", "any_of": ["hybrid", "plug-in hybrid", "electric", "fuel cell"]}, "next": "mpg"},
-        {"label": "Gas or diesel (no electrification)", "where": {"field": "powertrains", "any_of": ["gas", "diesel"]}, "next": "mpg"},
-        {"label": "No preference", "where": {}, "next": "mpg"}
+        {
+          "label": "Fully electric",
+          "where": {
+            "field": "powertrains",
+            "any_of": [
+              "electric"
+            ]
+          },
+          "next": "ev_range"
+        },
+        {
+          "label": "Hybrid or plug-in hybrid",
+          "where": {
+            "field": "powertrains",
+            "any_of": [
+              "hybrid",
+              "plug-in hybrid"
+            ]
+          },
+          "next": "mpg"
+        },
+        {
+          "label": "Any electrified (hybrid, plug-in, EV, fuel cell)",
+          "where": {
+            "field": "powertrains",
+            "any_of": [
+              "hybrid",
+              "plug-in hybrid",
+              "electric",
+              "fuel cell"
+            ]
+          },
+          "next": "mpg"
+        },
+        {
+          "label": "Gas or diesel (no electrification)",
+          "where": {
+            "field": "powertrains",
+            "any_of": [
+              "gas",
+              "diesel"
+            ]
+          },
+          "next": "mpg"
+        },
+        {
+          "label": "No preference",
+          "where": {},
+          "next": "mpg"
+        }
       ]
     },
     "ev_range": {
       "prompt": "How much EPA-rated range do you need?",
       "options": [
-        {"label": "300+ miles", "where": {"field": "ev_range", "gte": 300}, "next": "drive"},
-        {"label": "250+ miles", "where": {"field": "ev_range", "gte": 250}, "next": "drive"},
-        {"label": "200+ miles", "where": {"field": "ev_range", "gte": 200}, "next": "drive"},
-        {"label": "Any range", "where": {}, "next": "drive"}
+        {
+          "label": "300+ miles",
+          "where": {
+            "field": "ev_range",
+            "gte": 300
+          },
+          "next": "drive"
+        },
+        {
+          "label": "250+ miles",
+          "where": {
+            "field": "ev_range",
+            "gte": 250
+          },
+          "next": "drive"
+        },
+        {
+          "label": "200+ miles",
+          "where": {
+            "field": "ev_range",
+            "gte": 200
+          },
+          "next": "drive"
+        },
+        {
+          "label": "Any range",
+          "where": {},
+          "next": "drive"
+        }
       ]
     },
     "mpg": {
       "prompt": "How important is fuel economy? (EPA combined MPG, best version)",
       "options": [
-        {"label": "Very: 40+ MPG", "where": {"field": "mpg_combined_max", "gte": 40}, "next": "drive"},
-        {"label": "Somewhat: 30+ MPG", "where": {"field": "mpg_combined_max", "gte": 30}, "next": "drive"},
-        {"label": "At least 20 MPG", "where": {"field": "mpg_combined_max", "gte": 20}, "next": "drive"},
-        {"label": "Don't care", "where": {}, "next": "drive"}
+        {
+          "label": "Very: 40+ MPG",
+          "where": {
+            "field": "mpg_combined_max",
+            "gte": 40
+          },
+          "next": "drive"
+        },
+        {
+          "label": "Somewhat: 30+ MPG",
+          "where": {
+            "field": "mpg_combined_max",
+            "gte": 30
+          },
+          "next": "drive"
+        },
+        {
+          "label": "At least 20 MPG",
+          "where": {
+            "field": "mpg_combined_max",
+            "gte": 20
+          },
+          "next": "drive"
+        },
+        {
+          "label": "Don't care",
+          "where": {},
+          "next": "drive"
+        }
       ]
     },
     "drive": {
       "prompt": "Do you need AWD or 4WD (snow, rain, dirt roads, boat ramps)?",
       "options": [
-        {"label": "Yes, AWD or 4WD", "where": {"field": "drivetrain", "in": ["AWD", "4WD"]}, "next": "safety"},
-        {"label": "No, front- or rear-wheel drive is fine", "where": {}, "next": "safety"}
+        {
+          "label": "Yes, AWD or 4WD",
+          "where": {
+            "field": "drivetrain",
+            "in": [
+              "AWD",
+              "4WD"
+            ]
+          },
+          "next": "safety"
+        },
+        {
+          "label": "No, front- or rear-wheel drive is fine",
+          "where": {},
+          "next": "safety"
+        }
       ]
     },
     "safety": {
       "prompt": "What's the minimum NHTSA overall crash-test rating you'd accept?",
       "options": [
-        {"label": "5 stars only", "where": {"field": "overall_rating", "gte": 5}, "next": "adas"},
-        {"label": "4 stars or better", "where": {"field": "overall_rating", "gte": 4}, "next": "adas"},
-        {"label": "Any, including models NHTSA hasn't rated", "where": {}, "next": "adas"}
+        {
+          "label": "5 stars only",
+          "where": {
+            "field": "overall_rating",
+            "gte": 5
+          },
+          "next": "adas"
+        },
+        {
+          "label": "4 stars or better",
+          "where": {
+            "field": "overall_rating",
+            "gte": 4
+          },
+          "next": "adas"
+        },
+        {
+          "label": "Any, including models NHTSA hasn't rated",
+          "where": {},
+          "next": "adas"
+        }
       ]
     },
     "adas": {
       "prompt": "Do you want forward collision warning AND lane departure warning as standard?",
       "options": [
-        {"label": "Yes, both standard", "where": {"all": [
-          {"field": "forward_collision_warning", "eq": "Standard"},
-          {"field": "lane_departure_warning", "eq": "Standard"}
-        ]}, "next": "recalls"},
-        {"label": "Not required", "where": {}, "next": "recalls"}
+        {
+          "label": "Yes, both standard",
+          "where": {
+            "all": [
+              {
+                "field": "forward_collision_warning",
+                "eq": "Standard"
+              },
+              {
+                "field": "lane_departure_warning",
+                "eq": "Standard"
+              }
+            ]
+          },
+          "next": "recalls"
+        },
+        {
+          "label": "Not required",
+          "where": {},
+          "next": "recalls"
+        }
       ]
     },
     "recalls": {
       "prompt": "How much do recalls matter to you?",
       "options": [
-        {"label": "Avoid anything with recalls this model year", "where": {"field": "recalls", "lte": 0}, "next": null},
-        {"label": "No more than 2 recalls", "where": {"field": "recalls", "lte": 2}, "next": null},
-        {"label": "Don't care", "where": {}, "next": null}
+        {
+          "label": "Avoid anything with recalls this model year",
+          "where": {
+            "field": "recalls",
+            "lte": 0
+          },
+          "next": null
+        },
+        {
+          "label": "No more than 2 recalls",
+          "where": {
+            "field": "recalls",
+            "lte": 2
+          },
+          "next": null
+        },
+        {
+          "label": "Don't care",
+          "where": {},
+          "next": null
+        }
       ]
     }
   }

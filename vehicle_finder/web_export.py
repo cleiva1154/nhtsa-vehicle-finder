@@ -22,7 +22,7 @@ FIELDS = (
     "year", "make", "model", "description", "body", "drivetrain", "cab", "powertrains",
     "overall_rating", "forward_collision_warning", "lane_departure_warning", "recalls",
     "complaints", "mpg_combined_min", "mpg_combined_max", "ev_range", "annual_fuel_cost",
-    "epa_class",
+    "epa_class", "seats_min", "seats_max",
 )
 
 
@@ -32,6 +32,7 @@ def vehicle_record(v: Vehicle) -> dict:
         "nhtsa": NHTSA_RECORD.format(id=v.vehicle_id),
         "epa": v.epa_url,
         "powertrain": v.powertrain_source,
+        "seats": v.seats_source_url,
     }
     return row
 

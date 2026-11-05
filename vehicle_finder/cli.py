@@ -7,7 +7,7 @@ import datetime as dt
 import sys
 from pathlib import Path
 
-from . import fueleconomy
+from . import fueleconomy, seats
 from .catalog import (apply_fuel_economy, build_catalog, known_powertrain, load_catalog,
                       non_suvs, save_catalog)
 from .decision_tree import Question, build_tree, describe_tree, recommend, run
@@ -52,6 +52,26 @@ def add_fuel_economy(catalog, year: int, refresh: bool, offline: bool) -> None:
     print(f"fueleconomy.gov: matched EPA data for {matched} of {len(catalog)} trims.")
 
 
+def add_seats(vehicles, year: int, refresh: bool, offline: bool) -> None:
+    seat_file = DATA_DIR / f"seats_{year}.json"
+    if seat_file.exists() and not refresh:
+        records = seats.load(seat_file)
+    elif offline:
+        print("Seat counts not downloaded yet; skipping them (running offline).")
+        return
+    else:
+        client = NHTSAClient(cache_dir=DATA_DIR / "http_cache")
+        try:
+            records = seats.collect(client, year, {(v.make, v.model) for v in vehicles},
+                                    progress=lambda m: print(f"  {m}"))
+        except NHTSAError as err:
+            print(f"Warning: seat counts incomplete ({err}). Showing results without them.")
+            return
+        seats.save(records, seat_file)
+    filled = seats.apply_seats(vehicles, records)
+    print(f"NHTSA VIN records: seat counts for {filled} of {len(vehicles)} trims.")
+
+
 def default_year() -> int:
     # New model years show up in NCAP gradually; last year's list is complete.
     return dt.date.today().year - 1
@@ -85,6 +105,7 @@ def main(argv: list[str] | None = None) -> int:
 
     non_suv = non_suvs(catalog)
     pool = known_powertrain(non_suv)
+    add_seats(pool, args.year, args.refresh, args.offline)
     if args.stats:
         print_stats(catalog, non_suv)
         return 0
@@ -124,7 +145,10 @@ def print_results(session, top: int) -> None:
         stars = f"{r.best_rating}-star" if r.best_rating else "not rated"
         adas = "FCW+LDW standard" if r.standard_adas else "FCW/LDW not both standard"
         print(f"{i:>2}. {r.name}")
-        print(f"     {r.body}, {' / '.join(r.powertrains)}, "
+        seat_text = ("seats not listed" if r.seats_min is None else
+                     f"{r.seats_min} seats" if r.seats_min == r.seats_max else
+                     f"{r.seats_min}-{r.seats_max} seats")
+        print(f"     {r.body}, {' / '.join(r.powertrains)}, {seat_text}, "
               f"{'/'.join(r.drivetrains) or 'drivetrain n/a'}")
         print(f"     NHTSA: {stars}, {adas}, {r.recalls} recalls, {r.complaints} complaints")
         print(f"     EPA:   {format_epa(r)}")

@@ -257,5 +257,47 @@ class FuelEconomyTests(unittest.TestCase):
         self.assertEqual([v.model for v in s.remaining], ["CIVIC SEDAN"])  # 49 MPG hybrid version
 
 
+class SeatTests(unittest.TestCase):
+    def decoded(self, *values):
+        return [{"VIN": f"VIN{i:08d}", "Seats": v} for i, v in enumerate(values)]
+
+    def test_agreeing_records_give_one_value_for_every_version(self):
+        from vehicle_finder.seats import apply_seats, summarize
+        rec = summarize(2024, "HONDA", "ODYSSEY", self.decoded("8", "8", "", "8"))
+        self.assertEqual((rec.seats_min, rec.seats_max), (8, 8))
+        self.assertEqual((rec.vins_checked, rec.vins_with_seats), (4, 3))
+        self.assertIn("DecodeVinValues", rec.source_url)
+        trims = [fake("HONDA", "ODYSSEY", "2024 Honda ODYSSEY PV FWD", vpic="MPV") for _ in range(2)]
+        self.assertEqual(apply_seats(trims, {("HONDA", "ODYSSEY"): rec}), 2)
+        self.assertTrue(all(t.seats_min == 8 and t.seats_source for t in trims))
+
+    def test_disagreeing_records_give_a_range_not_a_pick(self):
+        from vehicle_finder.seats import summarize
+        rec = summarize(2025, "TOYOTA", "SIENNA HYBRID", self.decoded("7", "7", "8"))
+        self.assertEqual((rec.seats_min, rec.seats_max), (7, 8))
+        self.assertEqual(rec.counts, {"7": 2, "8": 1})
+
+    def test_no_seat_data_stays_unknown(self):
+        from vehicle_finder.seats import apply_seats, summarize
+        rec = summarize(2025, "TOYOTA", "TACOMA", self.decoded("", None, "0"))
+        self.assertIsNone(rec.seats_min)
+        self.assertIsNone(rec.source_url)
+        v = fake("TOYOTA", "TACOMA", "2025 Toyota TACOMA PU/CC 4WD", vpic="Truck")
+        self.assertEqual(apply_seats([v], {("TOYOTA", "TACOMA"): rec}), 0)
+        self.assertIsNone(v.seats_min)
+
+    def test_seats_only_add_matches_for_six_plus(self):
+        tree = build_tree()
+        opt = next(o for o in tree["start"].options if o.label.startswith("Carrying 6"))
+        van = fake("TOYOTA", "SIENNA", "2024 Toyota SIENNA PV AWD", vpic="MPV")
+        truck = fake("RAM", "1500 CREW CAB", "2024 Ram 1500 PU/CC 4WD", vpic="Truck")
+        self.assertTrue(opt.keep(van))            # minivan, seat count unknown: still in
+        self.assertFalse(opt.keep(truck))         # unknown seats: not assumed
+        truck.seats_min = truck.seats_max = 6
+        self.assertTrue(opt.keep(truck))          # NHTSA-confirmed 6 seats: added
+        truck.seats_min = 5                       # 5-6 range: not guaranteed 6
+        self.assertFalse(opt.keep(truck))
+
+
 if __name__ == "__main__":
     unittest.main()

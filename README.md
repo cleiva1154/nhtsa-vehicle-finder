@@ -124,9 +124,14 @@ The questions live in `vehicle_finder/tree.json`. Each option has a
 
 ## Limitations
 
-* **No seat counts yet.** Neither data source used so far publishes them, and
-  they are never estimated. "Back seats" uses EPA's "Two Seaters" class, and
-  "6 or more people" means minivans.
+* **Seat counts cover about 30% of trims.** They come from NHTSA's VIN
+  decoder (`seats.py`), run on the partial VINs in NHTSA owner-complaint
+  records for each model. A count applies to every version of a model, but
+  when the records disagree (2025 Sienna Hybrid: 7 and 8) the range is
+  shown. Missing counts stay blank and are never estimated. Because coverage
+  is low, seats only ever add matches: "6 or more people" means minivans or
+  NHTSA-confirmed 6+ seats, and "back seats" means not in EPA's "Two Seaters"
+  class or NHTSA-confirmed 4+ seats.
 * **Powertrain is never guessed.** It comes from fueleconomy.gov, or from
   NHTSA's model name when that states it outright (e.g. "LIGHTNING BEV").
   Vehicles with neither are left out. For 2025 that's 71 of 372 non-SUV
@@ -145,6 +150,7 @@ main.py                         entry point
 vehicle_finder/nhtsa_client.py  API client: caching, retries, throttling
 vehicle_finder/catalog.py       parsing, SUV/crossover classification, catalog build
 vehicle_finder/fueleconomy.py   fueleconomy.gov download + NCAP-to-EPA matching
+vehicle_finder/seats.py         seat counts from NHTSA VIN records
 vehicle_finder/decision_tree.py questions, tree engine, ranking
 vehicle_finder/cli.py           terminal UI
 vehicle_finder/tree.json        the questions (shared with the web page)

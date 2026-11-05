@@ -49,6 +49,8 @@ def matches(cond: dict, v) -> bool:
         return True
     if "all" in cond:
         return all(matches(c, v) for c in cond["all"])
+    if "any" in cond:
+        return any(matches(c, v) for c in cond["any"])
     value = v.get(cond["field"]) if isinstance(v, dict) else getattr(v, cond["field"])
     if value is None:
         return False
@@ -132,6 +134,8 @@ class Recommendation:
     recalls: int
     complaints: int
     standard_adas: bool
+    seats_min: Optional[int]
+    seats_max: Optional[int]
     mpg_min: Optional[int]
     mpg_max: Optional[int]
     ev_range: Optional[int]
@@ -163,6 +167,8 @@ def recommend(vehicles: list[Vehicle], top: int = 10) -> list[Recommendation]:
         mpg_hi = [t.mpg_combined_max for t in trims if t.mpg_combined_max]
         ranges = [t.ev_range for t in trims if t.ev_range]
         costs = [t.annual_fuel_cost for t in trims if t.annual_fuel_cost]
+        seat_lo = [t.seats_min for t in trims if t.seats_min]
+        seat_hi = [t.seats_max for t in trims if t.seats_max]
         best_epa = max(trims, key=lambda t: t.mpg_combined_max or 0)
         recs.append(Recommendation(
             make=make,
@@ -175,6 +181,8 @@ def recommend(vehicles: list[Vehicle], top: int = 10) -> list[Recommendation]:
             complaints=max(t.complaints for t in trims),
             standard_adas=any(t.forward_collision_warning == "Standard"
                               and t.lane_departure_warning == "Standard" for t in trims),
+            seats_min=min(seat_lo) if seat_lo else None,
+            seats_max=max(seat_hi) if seat_hi else None,
             mpg_min=min(mpg_lo) if mpg_lo else None,
             mpg_max=max(mpg_hi) if mpg_hi else None,
             ev_range=max(ranges) if ranges else None,

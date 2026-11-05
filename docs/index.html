@@ -190,7 +190,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
 
   <footer class="sources">
     <p id="source-line">Data: NHTSA crash-test ratings and vehicle records, and EPA fueleconomy.gov.</p>
-    <p>Ranked by NHTSA overall stars, then standard driver-assist, then fewest recalls, then best MPG. A vehicle is listed only when EPA or NHTSA states its powertrain. Values a source doesn't provide are shown as not listed, never estimated.</p>
+    <p>Ranked by NHTSA overall stars, then standard driver-assist, then fewest recalls, then best MPG. A vehicle is listed only when EPA or NHTSA states its powertrain. Seat counts come from NHTSA VIN records; when versions of a model differ, the range is shown. Values a source doesn't provide are shown as not listed, never estimated.</p>
   </footer>
 </div>
 
@@ -214,6 +214,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
   function matches(cond, v) {
     if (!cond || Object.keys(cond).length === 0) return true;
     if (cond.all) return cond.all.every((c) => matches(c, v));
+    if (cond.any) return cond.any.some((c) => matches(c, v));
     const value = v[cond.field];
     if (value === null || value === undefined) return false;
     if ("in" in cond) return cond.in.includes(value);
@@ -264,6 +265,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
       const hi = nums(trims.map((t) => t.mpg_combined_max));
       const ranges = nums(trims.map((t) => t.ev_range));
       const costs = nums(trims.map((t) => t.annual_fuel_cost));
+      const seatLo = nums(trims.map((t) => t.seats_min));
+      const seatHi = nums(trims.map((t) => t.seats_max));
+      const seatTrim = trims.find((t) => t.sources.seats);
       const bestEpa = trims.reduce((a, b) => ((b.mpg_combined_max || 0) > (a.mpg_combined_max || 0) ? b : a));
       return {
         make: trims[0].make, model: trims[0].model, body: trims[0].body,
@@ -277,6 +281,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
         mpgHi: hi.length ? Math.max(...hi) : null,
         range: ranges.length ? Math.max(...ranges) : null,
         cost: costs.length ? Math.min(...costs) : null,
+        seatsLo: seatLo.length ? Math.min(...seatLo) : null,
+        seatsHi: seatHi.length ? Math.max(...seatHi) : null,
+        seatsUrl: seatTrim ? seatTrim.sources.seats : null,
         epaUrl: bestEpa.sources.epa,
         nhtsaUrl: trims[0].sources.nhtsa,
         trims: trims.length
@@ -325,7 +332,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
     top.append(el("span", "rank", String(rank)), el("h3", null, r.make + " " + r.model));
     li.append(top);
 
-    const meta = [BODY_NAMES[r.body] || r.body, r.drivetrains.join(" / "), r.powertrains.map((p) => POWER_NAMES[p] || p).join(" / ")]
+    const seats = r.seatsLo === null ? "Seats not listed"
+      : (r.seatsLo === r.seatsHi ? r.seatsLo : r.seatsLo + "–" + r.seatsHi) + " seats";
+    const meta = [BODY_NAMES[r.body] || r.body, r.drivetrains.join(" / "), r.powertrains.map((p) => POWER_NAMES[p] || p).join(" / "), seats]
       .filter(Boolean).join(" · ");
     li.append(el("p", "meta", meta));
 
@@ -349,6 +358,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
       const a = el("a", null, "EPA fuel economy record ↗");
       a.href = r.epaUrl; a.target = "_blank"; a.rel = "noopener";
       links.append(a);
+    }
+    if (r.seatsUrl) {
+      const st = el("a", null, "NHTSA seat record ↗");
+      st.href = r.seatsUrl; st.target = "_blank"; st.rel = "noopener";
+      links.append(st);
     }
     const n = el("a", null, "NHTSA safety record ↗");
     n.href = r.nhtsaUrl; n.target = "_blank"; n.rel = "noopener";
