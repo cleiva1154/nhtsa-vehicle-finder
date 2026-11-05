@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Non-SUV Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Libre+Franklin:wght@400;500;600&display=swap">
+<style>
+/* Layout: questions on the left, a ranked stack of window-sticker cards on the right; one column when narrow or embedded small. */
+:root {
+  --paper: #f4f6f4;
+  --card: #ffffff;
+  --ink: #18211c;
+  --muted: #56645c;
+  --rule: #cfd8d2;
+  --sign: #1d6a45;        /* US highway guide-sign green */
+  --sign-ink: #ffffff;
+  --sign-soft: #e3efe8;
+  --warn: #8a5300;
+  --star: #b88300;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Libre Franklin", "Franklin Gothic Medium", "Helvetica Neue", Arial, sans-serif;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1512; --card: #161e1a; --ink: #e6ece8; --muted: #9eaca4; --rule: #2c3832;
+    --sign: #2a8a5b; --sign-ink: #ffffff; --sign-soft: #183326; --warn: #e3a64f; --star: #e5b842;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1512; --card: #161e1a; --ink: #e6ece8; --muted: #9eaca4; --rule: #2c3832;
+  --sign: #2a8a5b; --sign-ink: #ffffff; --sign-soft: #183326; --warn: #e3a64f; --star: #e5b842;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.5 var(--font-body);
+}
+.app { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 24px; display: grid; gap: 20px; }
+
+/* Header ------------------------------------------------------------- */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.sign {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; letter-spacing: 0.04em;
+  color: var(--sign-ink); background: var(--sign); border-radius: 8px;
+  box-shadow: inset 0 0 0 2px var(--sign), inset 0 0 0 4px var(--sign-ink);
+  padding: 7px 14px; white-space: nowrap;
+}
+.brand p { margin: 0; color: var(--muted); font-size: 0.9rem; max-width: 46ch; }
+.pop { color: var(--sign); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.pop:hover { text-decoration: underline; }
+
+/* Two panes ---------------------------------------------------------- */
+.layout { display: grid; gap: 20px; align-items: start; }
+@media (min-width: 820px) { .layout { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); } }
+.pane-title {
+  font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); margin: 0;
+}
+
+/* Question pane ------------------------------------------------------ */
+.ask { display: grid; gap: 14px; min-width: 0; }
+@media (min-width: 820px) { .ask { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); } }
+.trail { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.trail button {
+  font: 500 0.8rem/1.2 var(--font-body); color: var(--sign); background: var(--sign-soft);
+  border: 1px solid transparent; border-radius: 999px; padding: 5px 10px; cursor: pointer;
+}
+.trail button:hover { border-color: var(--sign); }
+.trail button span { color: var(--muted); }
+.question { display: grid; gap: 12px; }
+.question h2 {
+  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.75rem; line-height: 1.1;
+  text-wrap: balance;
+}
+.options { display: grid; gap: 8px; }
+.opt {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
+  text-align: left; font: 500 0.98rem/1.3 var(--font-body); color: var(--ink);
+  background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 12px 14px; cursor: pointer; transition: border-color 0.12s, background 0.12s;
+}
+.opt:hover { border-color: var(--sign); background: var(--sign-soft); }
+.opt .n { flex: none; color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.done { background: var(--sign-soft); border-radius: var(--radius); padding: 14px; }
+.done h2 { margin: 0 0 4px; font-family: var(--font-display); font-size: 1.5rem; }
+.done p { margin: 0; color: var(--muted); }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; }
+.ghost {
+  font: 600 0.88rem/1 var(--font-body); color: var(--ink); background: transparent;
+  border: 1px solid var(--rule); border-radius: var(--radius); padding: 9px 14px; cursor: pointer;
+}
+.ghost:hover:not(:disabled) { border-color: var(--ink); }
+.ghost:disabled { opacity: 0.45; cursor: default; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-offset: 2px; }
+
+/* Results pane ------------------------------------------------------- */
+.results { display: grid; gap: 12px; min-width: 0; }
+.results-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.results-head p { margin: 0; color: var(--muted); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+
+/* A result card reads like a window sticker: name bar, then the figures buyers compare. */
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
+.card-top {
+  display: flex; align-items: baseline; gap: 10px; padding: 10px 14px;
+  border-bottom: 2px solid var(--ink);
+}
+.rank { font-family: var(--font-display); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.card h3 {
+  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; line-height: 1.15;
+  letter-spacing: 0.02em; min-width: 0; overflow-wrap: anywhere;
+}
+.meta { margin: 0; padding: 8px 14px 0; color: var(--muted); font-size: 0.86rem; }
+.figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 10px 14px; gap: 10px; }
+@media (max-width: 420px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.fig { display: grid; gap: 2px; min-width: 0; }
+.num {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; line-height: 1;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.num.none { color: var(--muted); font-size: 1.1rem; line-height: 1.45; }
+.stars { color: var(--star); font-size: 1.15rem; letter-spacing: 0.06em; line-height: 1.4; white-space: nowrap; }
+.stars .off { color: var(--rule); }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.flags { list-style: none; margin: 0; padding: 0 14px 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.flags li { font-size: 0.78rem; border-radius: 999px; padding: 3px 9px; background: var(--paper); color: var(--muted); }
+.flags li.good { background: var(--sign-soft); color: var(--sign); }
+.flags li.warn { color: var(--warn); }
+.links { display: flex; flex-wrap: wrap; gap: 14px; padding: 9px 14px; border-top: 1px solid var(--rule); font-size: 0.82rem; }
+.links a { color: var(--sign); font-weight: 600; text-decoration: none; }
+.links a:hover { text-decoration: underline; }
+.more { justify-self: start; }
+.empty, .error { color: var(--muted); background: var(--card); border: 1px dashed var(--rule); border-radius: var(--radius); padding: 16px; margin: 0; }
+
+/* Footer ------------------------------------------------------------- */
+.sources { border-top: 1px solid var(--rule); padding-top: 12px; color: var(--muted); font-size: 0.8rem; display: grid; gap: 4px; }
+.sources p { margin: 0; max-width: 90ch; }
+.sources a { color: var(--sign); }
+@media (prefers-reduced-motion: reduce) { .opt { transition: none; } }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <span class="sign">NOT AN SUV</span>
+      <p>Answer a few questions to find a car, minivan or pickup that fits your life. SUVs and crossovers are left out.</p>
+    </div>
+    <a class="pop" id="pop" href="#" target="_blank" rel="noopener" hidden>Open full screen ↗</a>
+  </header>
+
+  <div class="layout">
+    <section class="ask" aria-labelledby="ask-title">
+      <h2 class="pane-title" id="ask-title">Your needs</h2>
+      <ol class="trail" id="trail" aria-label="Your answers so far"></ol>
+      <div class="question" id="question">
+        <h2 id="prompt">Loading vehicle data…</h2>
+        <div class="options" id="options"></div>
+      </div>
+      <div class="done" id="done" hidden>
+        <h2>That's everything</h2>
+        <p id="done-text"></p>
+      </div>
+      <div class="controls">
+        <button class="ghost" id="back" type="button" disabled>Back</button>
+        <button class="ghost" id="reset" type="button" disabled>Start over</button>
+      </div>
+    </section>
+
+    <section class="results" aria-labelledby="results-title" aria-live="polite">
+      <div class="results-head">
+        <h2 class="pane-title" id="results-title">Top matches</h2>
+        <p id="count"></p>
+      </div>
+      <ol class="list" id="list"></ol>
+      <button class="ghost more" id="more" type="button" hidden>Show more</button>
+    </section>
+  </div>
+
+  <footer class="sources">
+    <p id="source-line">Data: NHTSA crash-test ratings and vehicle records, and EPA fueleconomy.gov.</p>
+    <p>Ranked by NHTSA overall stars, then standard driver-assist, then fewest recalls, then best MPG. A vehicle is listed only when EPA or NHTSA states its powertrain. Values a source doesn't provide are shown as not listed, never estimated.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const PAGE = 8;
+  const BODY_NAMES = {
+    sedan: "Sedan", hatchback: "Hatchback", wagon: "Wagon", coupe: "Coupe",
+    convertible: "Convertible", minivan: "Minivan", pickup: "Pickup", van: "Van",
+    unknown: "Body style not listed"
+  };
+  const POWER_NAMES = {
+    gas: "Gas", diesel: "Diesel", hybrid: "Hybrid", "plug-in hybrid": "Plug-in hybrid",
+    electric: "Electric", "fuel cell": "Fuel cell"
+  };
+  const $ = (id) => document.getElementById(id);
+  let tree = null, vehicles = [], answers = [], shown = PAGE;
+
+  // ---- Same rules as vehicle_finder/decision_tree.py ------------------
+  function matches(cond, v) {
+    if (!cond || Object.keys(cond).length === 0) return true;
+    if (cond.all) return cond.all.every((c) => matches(c, v));
+    const value = v[cond.field];
+    if (value === null || value === undefined) return false;
+    if ("in" in cond) return cond.in.includes(value);
+    if ("eq" in cond) return value === cond.eq;
+    if ("ne" in cond) return value !== cond.ne;
+    if ("gte" in cond) return value >= cond.gte;
+    if ("lte" in cond) return value <= cond.lte;
+    if ("any_of" in cond) return value.some((x) => cond.any_of.includes(x));
+    return false;
+  }
+
+  // Replays the answers through the tree: hides options with no matches and
+  // skips questions whose answers wouldn't narrow anything.
+  function walk() {
+    let remaining = vehicles, nodeId = tree.start, i = 0;
+    const trail = [];
+    while (nodeId) {
+      const q = tree.questions[nodeId];
+      const viable = q.options
+        .map((o) => ({ o, sub: remaining.filter((v) => matches(o.where, v)) }))
+        .filter((x) => x.sub.length > 0);
+      if (viable.length === 0) break;
+      if (viable.every((x) => x.sub.length === remaining.length)) { nodeId = viable[0].o.next; continue; }
+      if (i < answers.length) {
+        const pick = viable.find((x) => x.o.label === answers[i]);
+        if (!pick) { answers = answers.slice(0, i); return { remaining, q, viable, trail }; }
+        trail.push({ prompt: q.prompt, label: pick.o.label });
+        remaining = pick.sub; nodeId = pick.o.next; i++;
+        continue;
+      }
+      return { remaining, q, viable, trail };
+    }
+    return { remaining, q: null, viable: [], trail };
+  }
+
+  // ---- Ranking: one entry per make/model -------------------------------
+  function recommend(list) {
+    const groups = new Map();
+    for (const v of list) {
+      const key = v.make + "|" + v.model;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(v);
+    }
+    const nums = (arr) => arr.filter((x) => typeof x === "number");
+    const recs = [...groups.values()].map((trims) => {
+      const ratings = nums(trims.map((t) => t.overall_rating));
+      const lo = nums(trims.map((t) => t.mpg_combined_min));
+      const hi = nums(trims.map((t) => t.mpg_combined_max));
+      const ranges = nums(trims.map((t) => t.ev_range));
+      const costs = nums(trims.map((t) => t.annual_fuel_cost));
+      const bestEpa = trims.reduce((a, b) => ((b.mpg_combined_max || 0) > (a.mpg_combined_max || 0) ? b : a));
+      return {
+        make: trims[0].make, model: trims[0].model, body: trims[0].body,
+        powertrains: [...new Set(trims.flatMap((t) => t.powertrains))].sort(),
+        drivetrains: [...new Set(trims.map((t) => t.drivetrain).filter(Boolean))].sort(),
+        rating: ratings.length ? Math.max(...ratings) : null,
+        adas: trims.some((t) => t.forward_collision_warning === "Standard" && t.lane_departure_warning === "Standard"),
+        recalls: Math.max(...trims.map((t) => t.recalls || 0)),
+        complaints: Math.max(...trims.map((t) => t.complaints || 0)),
+        mpgLo: lo.length ? Math.min(...lo) : null,
+        mpgHi: hi.length ? Math.max(...hi) : null,
+        range: ranges.length ? Math.max(...ranges) : null,
+        cost: costs.length ? Math.min(...costs) : null,
+        epaUrl: bestEpa.sources.epa,
+        nhtsaUrl: trims[0].sources.nhtsa,
+        trims: trims.length
+      };
+    });
+    const score = (r) => [r.rating || 0, r.adas ? 1 : 0, -r.recalls, r.mpgHi || 0, -r.complaints];
+    recs.sort((a, b) => {
+      const sa = score(a), sb = score(b);
+      for (let k = 0; k < sa.length; k++) if (sa[k] !== sb[k]) return sb[k] - sa[k];
+      const ka = a.make + a.model, kb = b.make + b.model;
+      return ka < kb ? -1 : ka > kb ? 1 : 0;
+    });
+    return recs;
+  }
+
+  // ---- Rendering --------------------------------------------------------
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function figure(value, label, isStars) {
+    const f = el("div", "fig");
+    if (isStars) {
+      const s = el("span", "stars");
+      if (value) {
+        s.setAttribute("aria-label", value + " of 5 stars");
+        s.append("★".repeat(value));
+        s.append(el("span", "off", "★".repeat(5 - value)));
+      } else {
+        s.className = "num none"; s.textContent = "Not rated";
+      }
+      f.append(s);
+    } else {
+      f.append(el("span", value === null ? "num none" : "num", value === null ? "Not listed" : value));
+    }
+    f.append(el("span", "label", label));
+    return f;
+  }
+
+  function card(r, rank) {
+    const li = el("li", "card");
+    const top = el("div", "card-top");
+    top.append(el("span", "rank", String(rank)), el("h3", null, r.make + " " + r.model));
+    li.append(top);
+
+    const meta = [BODY_NAMES[r.body] || r.body, r.drivetrains.join(" / "), r.powertrains.map((p) => POWER_NAMES[p] || p).join(" / ")]
+      .filter(Boolean).join(" · ");
+    li.append(el("p", "meta", meta));
+
+    const figs = el("div", "figures");
+    const ev = r.powertrains.length === 1 && r.powertrains[0] === "electric";
+    const mpg = r.mpgHi === null ? null : (r.mpgLo !== null && r.mpgLo !== r.mpgHi ? r.mpgLo + "–" + r.mpgHi : String(r.mpgHi));
+    figs.append(figure(mpg, ev ? "MPGe combined" : "MPG combined"));
+    figs.append(figure(r.rating, "NHTSA overall", true));
+    if (r.range !== null) figs.append(figure(r.range + " mi", ev ? "EPA range" : "Electric range"));
+    else figs.append(figure(r.cost === null ? null : "$" + r.cost.toLocaleString("en-US"), "Fuel / year, from"));
+    li.append(figs);
+
+    const flags = el("ul", "flags");
+    flags.append(el("li", r.adas ? "good" : "", r.adas ? "Collision + lane warning standard" : "Driver-assist not both standard"));
+    flags.append(el("li", r.recalls ? "warn" : "good", r.recalls === 0 ? "No recalls" : r.recalls + (r.recalls === 1 ? " recall" : " recalls")));
+    if (r.complaints) flags.append(el("li", "", r.complaints + " owner complaints"));
+    li.append(flags);
+
+    const links = el("p", "links");
+    if (r.epaUrl) {
+      const a = el("a", null, "EPA fuel economy record ↗");
+      a.href = r.epaUrl; a.target = "_blank"; a.rel = "noopener";
+      links.append(a);
+    }
+    const n = el("a", null, "NHTSA safety record ↗");
+    n.href = r.nhtsaUrl; n.target = "_blank"; n.rel = "noopener";
+    links.append(n);
+    li.append(links);
+    return li;
+  }
+
+  function render() {
+    const state = walk();
+    const qBox = $("question"), done = $("done"), opts = $("options");
+
+    // Trail of answers; clicking one goes back to that question.
+    const trail = $("trail");
+    trail.replaceChildren(...state.trail.map((t, k) => {
+      const li = el("li");
+      const b = el("button");
+      b.type = "button";
+      b.title = "Change: " + t.prompt;
+      b.append(t.label + " ", el("span", null, "✕"));
+      b.addEventListener("click", () => { answers = answers.slice(0, k); shown = PAGE; render(); });
+      li.append(b);
+      return li;
+    }));
+
+    if (state.q) {
+      qBox.hidden = false; done.hidden = true;
+      $("prompt").textContent = state.q.prompt;
+      opts.replaceChildren(...state.viable.map(({ o, sub }) => {
+        const b = el("button", "opt");
+        b.type = "button";
+        const models = new Set(sub.map((v) => v.make + "|" + v.model)).size;
+        b.append(el("span", null, o.label), el("span", "n", models + (models === 1 ? " model" : " models")));
+        b.addEventListener("click", () => { answers = answers.concat(o.label); shown = PAGE; render(); });
+        return b;
+      }));
+    } else {
+      qBox.hidden = true; done.hidden = false;
+    }
+
+    const recs = recommend(state.remaining);
+    $("count").textContent = recs.length + (recs.length === 1 ? " model" : " models") + " match";
+    $("results-title").textContent = state.q ? "Top matches so far" : "Your matches";
+    $("done-text").textContent = "Here are the " + recs.length + " models that fit everything you asked for. Change any answer above to see different options.";
+    const list = $("list");
+    if (recs.length === 0) {
+      list.replaceChildren(el("li", "empty", "Nothing matches every answer. Remove one of your answers above."));
+    } else {
+      list.replaceChildren(...recs.slice(0, shown).map((r, i) => card(r, i + 1)));
+    }
+    $("more").hidden = recs.length <= shown;
+    $("more").textContent = "Show " + Math.min(PAGE, recs.length - shown) + " more";
+    $("back").disabled = answers.length === 0;
+    $("reset").disabled = answers.length === 0;
+  }
+
+  $("back").addEventListener("click", () => { answers = answers.slice(0, -1); shown = PAGE; render(); });
+  $("reset").addEventListener("click", () => { answers = []; shown = PAGE; render(); });
+  $("more").addEventListener("click", () => { shown += PAGE; render(); });
+
+  // When embedded (e.g. in Google Sites), offer the page in its own tab.
+  try {
+    if (window.self !== window.top && /^https?:/.test(location.href)) {
+      const pop = $("pop");
+      pop.href = location.href.split("#")[0];
+      pop.hidden = false;
+    }
+  } catch (e) { /* cross-origin frame checks can throw; the link is optional */ }
+
+  Promise.all([fetch("vehicles.json"), fetch("tree.json")])
+    .then(([a, b]) => {
+      if (!a.ok || !b.ok) throw new Error("missing data files");
+      return Promise.all([a.json(), b.json()]);
+    })
+    .then(([data, t]) => {
+      tree = t;
+      vehicles = data.vehicles;
+      $("source-line").textContent =
+        "Model year " + data.model_year + ". Data: NHTSA crash-test ratings and vehicle records, and EPA fueleconomy.gov, collected " + data.generated + ".";
+      render();
+    })
+    .catch(() => {
+      $("prompt").textContent = "The vehicle data didn't load.";
+      $("options").replaceChildren(el("p", "error",
+        "This page needs vehicles.json and tree.json next to it. Run python3 main.py --export-site docs, then serve that folder."));
+    });
+})();
+</script>
+
+</body>
+</html>
