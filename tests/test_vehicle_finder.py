@@ -118,10 +118,23 @@ class DecisionTreeTests(unittest.TestCase):
         self.assertNotIn("CROSSTREK", names)
         self.assertIn("SIENNA", names)
 
+    def test_every_question_and_answer_has_a_short_explanation(self):
+        import json
+        from vehicle_finder.decision_tree import TREE_FILE
+        data = json.loads(TREE_FILE.read_text())
+        for qid, question in data["questions"].items():
+            self.assertTrue(question.get("about"), qid)
+            self.assertLess(len(question["about"]), 320, qid)
+            for option in question["options"]:
+                self.assertTrue(option.get("about"), f"{qid} {option['label']}")
+                self.assertLess(len(option["about"]), 220, option["label"])
+
     def test_every_next_points_to_a_real_question(self):
         for q in self.tree.values():
             for opt in q.options:
                 self.assertTrue(opt.next is None or opt.next in self.tree, opt.next)
+            if q.free_text:
+                self.assertIn(q.free_text["next"], self.tree)
 
     def test_commuter_wanting_hybrid(self):
         s = run(self.tree, NON_SUV, scripted("Commuting", "Hybrid", "No,", "5 stars", "Yes", "Don't"))

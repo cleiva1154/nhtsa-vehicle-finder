@@ -81,6 +81,8 @@ class EpaRecord:
     mpg_highway: int | None
     ev_range: int | None       # EVs: total range; PHEVs: electric-only range
     annual_fuel_cost: int | None
+    cargo_cuft: int | None = None  # luggage volume; 0 in the file means "not reported"
+    passenger_cuft: int | None = None  # cabin volume; 0 in the file means "not reported"
 
     @property
     def is_suv(self) -> bool:
@@ -129,6 +131,20 @@ def _int(value: str) -> int | None:
     return n or None
 
 
+def _reported_volume(row: dict, keys: tuple[str, ...]) -> int | None:
+    """Roomiest reported volume. EPA uses 0 for 'not reported'."""
+    volumes = [n for n in (_int(row.get(key)) for key in keys) if n]
+    return max(volumes) if volumes else None
+
+
+def _cargo_cuft(row: dict) -> int | None:
+    return _reported_volume(row, ("lv2", "lv4", "hlv"))
+
+
+def _passenger_cuft(row: dict) -> int | None:
+    return _reported_volume(row, ("pv2", "pv4", "hpv"))
+
+
 # ------------------------------------------------------------------ download
 def download_bulk(data_dir: Path, refresh: bool = False, offline: bool = False) -> Path:
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -154,14 +170,21 @@ def download_bulk(data_dir: Path, refresh: bool = False, offline: bool = False) 
     return target
 
 
-def load_year(zip_path: Path, year: int) -> list[EpaRecord]:
+def load_years(zip_path: Path, years: set[int] | None = None) -> list[EpaRecord]:
+    """EPA records for ``years``, or every year in the file when ``years`` is None."""
+    wanted = None if years is None else {str(year) for year in years}
+    records = []
     with zipfile.ZipFile(zip_path) as zf:
         name = next(n for n in zf.namelist() if n.endswith(".csv"))
         with zf.open(name) as raw:
             reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8", newline=""))
-            records = []
             for row in reader:
-                if row.get("year") != str(year):
+                year_text = row.get("year")
+                if wanted is not None and year_text not in wanted:
+                    continue
+                try:
+                    year = int(year_text)
+                except (TypeError, ValueError):
                     continue
                 powertrain = ATV_TYPES.get(row.get("atvType", ""), "gas")
                 ev_range = (_int(row.get("range")) if powertrain == "electric"
@@ -181,8 +204,14 @@ def load_year(zip_path: Path, year: int) -> list[EpaRecord]:
                     mpg_highway=_int(row.get("highway08")),
                     ev_range=ev_range,
                     annual_fuel_cost=_int(row.get("fuelCost08")),
+                    cargo_cuft=_cargo_cuft(row),
+                    passenger_cuft=_passenger_cuft(row),
                 ))
     return records
+
+
+def load_year(zip_path: Path, year: int) -> list[EpaRecord]:
+    return load_years(zip_path, {year})
 
 
 # ------------------------------------------------------------------ matching
@@ -209,16 +238,20 @@ class FuelEconomyIndex:
         for r in records:
             self.by_make.setdefault(_norm(r.make), []).append(r)
 
-    def _make_records(self, make: str) -> list[EpaRecord]:
+    def _make_records(self, make: str, year: int | None = None) -> list[EpaRecord]:
         key = _norm(make)
         if key in self.by_make:
-            return self.by_make[key]
-        # NCAP "ALFA" vs EPA "Alfa Romeo"
-        return [r for k, rs in self.by_make.items() if k.startswith(key) for r in rs]
+            records = self.by_make[key]
+        else:
+            # NCAP "ALFA" vs EPA "Alfa Romeo"
+            records = [r for k, rs in self.by_make.items() if k.startswith(key) for r in rs]
+        if year is None:
+            return records
+        return [r for r in records if r.year == year]
 
     def match(self, vehicle: "Vehicle") -> list[EpaRecord]:
         """EPA records for one NCAP trim (empty if no confident match)."""
-        records = self._make_records(vehicle.make)
+        records = self._make_records(vehicle.make, vehicle.year)
         candidates: list[EpaRecord] = []
         for key in _model_keys(vehicle.make, vehicle.model):
             # EPA base models can hold aliases: "Golf/GTI".
@@ -282,6 +315,8 @@ def enrich(vehicle: "Vehicle", records: list[EpaRecord]) -> None:
     mpg = [r.mpg_combined for r in records if r.mpg_combined]
     ranges = [r.ev_range for r in records if r.ev_range]
     costs = [r.annual_fuel_cost for r in records if r.annual_fuel_cost]
+    cargos = [r.cargo_cuft for r in records if r.cargo_cuft]
+    passengers = [r.passenger_cuft for r in records if r.passenger_cuft]
     best = max(records, key=lambda r: r.mpg_combined or 0)
 
     vehicle.powertrains = sorted({r.powertrain for r in records})
@@ -292,6 +327,9 @@ def enrich(vehicle: "Vehicle", records: list[EpaRecord]) -> None:
     vehicle.mpg_highway = best.mpg_highway
     vehicle.ev_range = max(ranges) if ranges else None
     vehicle.annual_fuel_cost = min(costs) if costs else None
+    vehicle.cargo_cuft_min = min(cargos) if cargos else None
+    vehicle.cargo_cuft = max(cargos) if cargos else None
+    vehicle.passenger_cuft = max(passengers) if passengers else None
     vehicle.epa_class = best.vclass
     vehicle.epa_url = best.url
     vehicle.epa_says_suv = all(r.is_suv for r in records)

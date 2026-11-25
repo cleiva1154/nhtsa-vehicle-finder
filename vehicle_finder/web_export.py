@@ -23,31 +23,58 @@ FIELDS = (
     "overall_rating", "forward_collision_warning", "lane_departure_warning", "recalls",
     "complaints", "mpg_combined_min", "mpg_combined_max", "ev_range", "annual_fuel_cost",
     "epa_class", "seats_min", "seats_max",
+    "price_low", "price_typical", "price_high", "n_listings",
+    "mileage_low", "mileage_typical", "mileage_high", "transmission",
+    "cargo_cuft_min", "cargo_cuft", "passenger_cuft", "curb_weight_lb", "brand_region",
+)
+PRICE_BASIS = (
+    "Prices and mileages are the middle half of asking prices and odometer readings "
+    "for that model year among used and certified cars in California. "
+    "Cargo volume is the roomiest luggage figure EPA lists for that model year. "
+    "Curb weight is the middle NHTSA crash-test figure for that model year. "
+    "A brand's country is where the company is based, not where that car was built. "
+    "The SUV comparison uses those same summaries for a short list of common SUVs. "
+    "This is not an offer for a specific vehicle."
 )
 
 
 def vehicle_record(v: Vehicle) -> dict:
     row = {f: getattr(v, f) for f in FIELDS}
+    nhtsa = NHTSA_RECORD.format(id=v.vehicle_id) if v.vehicle_id else "https://www.nhtsa.gov/ratings"
     row["sources"] = {
-        "nhtsa": NHTSA_RECORD.format(id=v.vehicle_id),
+        "nhtsa": nhtsa,
         "epa": v.epa_url,
         "powertrain": v.powertrain_source,
         "seats": v.seats_source_url,
     }
+    if v.compare_role:
+        row["role"] = v.compare_role
     return row
 
 
-def export_site(vehicles: list[Vehicle], year: int, out: Path) -> Path:
+def export_site(
+    vehicles: list[Vehicle], year: int, out: Path, rivals: list[Vehicle] | None = None,
+) -> Path:
     out.mkdir(parents=True, exist_ok=True)
+    years = [v.year for v in vehicles]
+    if not years:
+        span: int | str = year
+    elif min(years) == max(years):
+        span = min(years)
+    else:
+        span = f"{min(years)}-{max(years)}"
+    priced = any(v.price_typical for v in vehicles)
     data = {
-        "model_year": year,
+        "model_year": span,
         "generated": dt.date.today().isoformat(),
+        "price_basis": PRICE_BASIS if priced else None,
         "sources": {
-            "NHTSA NCAP safety ratings": "https://api.nhtsa.gov/SafetyRatings",
+            "NHTSA NCAP safety ratings": "https://www.nhtsa.gov/ratings",
             "NHTSA vPIC": "https://vpic.nhtsa.dot.gov/api/",
             "EPA fueleconomy.gov": "https://www.fueleconomy.gov/feg/ws/",
         },
         "vehicles": [vehicle_record(v) for v in vehicles],
+        "rivals": [vehicle_record(v) for v in (rivals or [])],
     }
     (out / "vehicles.json").write_text(json.dumps(data, separators=(",", ":")))
     shutil.copyfile(TREE_FILE, out / "tree.json")

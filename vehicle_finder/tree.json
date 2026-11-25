@@ -1,5 +1,5 @@
 {
-  "_comment": "Decision tree shared by the Python app and the web page. Each option's 'where' is a condition on a vehicle; {} matches everything. Conditions: {field, in|eq|ne|gte|lte|any_of}, or {all: [...]} / {any: [...]}. A missing (null) value never satisfies a condition.",
+  "_comment": "Decision tree shared by the Python app and the web page. Each option's 'where' is a condition on a vehicle; {} matches everything. Conditions: {field, in|eq|ne|gte|lte|any_of}, or {all: [...]} / {any: [...]}. A missing (null) value never satisfies a condition. 'about' is a short explanation the web page can expand. It is not a filter.",
   "start": "start",
   "questions": {
     "start": {
@@ -15,7 +15,8 @@
               "wagon"
             ]
           },
-          "next": "power"
+          "next": "power",
+          "about": "Sedans, hatchbacks, and wagons. Easy to park, with room for a person or two and some bags."
         },
         {
           "label": "Family of up to 5, with room for gear",
@@ -28,7 +29,8 @@
               "minivan"
             ]
           },
-          "next": "family_body"
+          "next": "family_body",
+          "about": "Those same cars, plus minivans, which carry people and cargo without being an SUV."
         },
         {
           "label": "Carrying 6 or more people",
@@ -44,7 +46,8 @@
               }
             ]
           },
-          "next": "power"
+          "next": "power",
+          "about": "Minivans, and any other model NHTSA lists with at least 6 seats."
         },
         {
           "label": "Towing, hauling, or work",
@@ -52,7 +55,8 @@
             "field": "body",
             "eq": "pickup"
           },
-          "next": "cab"
+          "next": "cab",
+          "about": "Pickup trucks. This list does not include an official tow rating."
         },
         {
           "label": "Fun / weekend driving",
@@ -63,14 +67,17 @@
               "convertible"
             ]
           },
-          "next": "roof"
+          "next": "roof",
+          "about": "Coupes and convertibles."
         },
         {
           "label": "Not sure, show me everything",
           "where": {},
-          "next": "body_any"
+          "next": "body_any",
+          "about": "Every body style still in the list. The next question lets you narrow it."
         }
-      ]
+      ],
+      "about": "This chooses a body style. SUVs and crossovers are already left out."
     },
     "family_body": {
       "prompt": "Which body style do you prefer?",
@@ -81,7 +88,8 @@
             "field": "body",
             "eq": "sedan"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A separate trunk. Usually the quietest and cheapest shape of a given car."
         },
         {
           "label": "Hatchback",
@@ -89,7 +97,8 @@
             "field": "body",
             "eq": "hatchback"
           },
-          "next": "power"
+          "next": "power",
+          "about": "The cargo area opens with the rear window. Often more room than the sedan of the same car."
         },
         {
           "label": "Wagon",
@@ -97,7 +106,8 @@
             "field": "body",
             "eq": "wagon"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A longer roof and a tall cargo hold. Still a car, not an SUV."
         },
         {
           "label": "Minivan",
@@ -105,14 +115,17 @@
             "field": "body",
             "eq": "minivan"
           },
-          "next": "power"
+          "next": "power",
+          "about": "Sliding doors and three rows. The usual stand-in for a three-row SUV."
         },
         {
           "label": "No preference",
           "where": {},
-          "next": "power"
+          "next": "power",
+          "about": "Keeps every family body style still available."
         }
-      ]
+      ],
+      "about": "These are the family shapes still available. It does not change the powertrain or the price."
     },
     "body_any": {
       "prompt": "Any body style you have in mind?",
@@ -123,7 +136,8 @@
             "field": "body",
             "eq": "sedan"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A separate trunk."
         },
         {
           "label": "Hatchback",
@@ -131,7 +145,8 @@
             "field": "body",
             "eq": "hatchback"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A rear hatch, usually with more cargo room than a sedan."
         },
         {
           "label": "Wagon",
@@ -139,7 +154,8 @@
             "field": "body",
             "eq": "wagon"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A long roof and a tall cargo hold."
         },
         {
           "label": "Coupe",
@@ -147,7 +163,8 @@
             "field": "body",
             "eq": "coupe"
           },
-          "next": "power"
+          "next": "power",
+          "about": "Two doors, and usually a lower roof."
         },
         {
           "label": "Convertible",
@@ -155,7 +172,8 @@
             "field": "body",
             "eq": "convertible"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A roof that folds."
         },
         {
           "label": "Minivan",
@@ -163,7 +181,8 @@
             "field": "body",
             "eq": "minivan"
           },
-          "next": "power"
+          "next": "power",
+          "about": "Sliding doors and three rows."
         },
         {
           "label": "Pickup truck",
@@ -171,14 +190,17 @@
             "field": "body",
             "eq": "pickup"
           },
-          "next": "power"
+          "next": "power",
+          "about": "An open bed behind the cab."
         },
         {
           "label": "No preference",
           "where": {},
-          "next": "power"
+          "next": "power",
+          "about": "Keeps every body style still available."
         }
-      ]
+      ],
+      "about": "Every non-SUV shape in the list. Pick one, or keep them all."
     },
     "cab": {
       "prompt": "What size cab do you need?",
@@ -189,7 +211,8 @@
             "field": "cab",
             "eq": "crew"
           },
-          "next": "power"
+          "next": "power",
+          "about": "Four full doors and a back seat adults can use."
         },
         {
           "label": "Extended cab (small rear seats)",
@@ -197,7 +220,8 @@
             "field": "cab",
             "eq": "extended"
           },
-          "next": "power"
+          "next": "power",
+          "about": "A smaller back seat, often with half-doors."
         },
         {
           "label": "Regular cab (no rear seats)",
@@ -205,14 +229,17 @@
             "field": "cab",
             "eq": "regular"
           },
-          "next": "power"
+          "next": "power",
+          "about": "One row of seats."
         },
         {
           "label": "No preference",
           "where": {},
-          "next": "power"
+          "next": "power",
+          "about": "Includes pickups whose cab size was not listed."
         }
-      ]
+      ],
+      "about": "Cab size is the doors and seats of a pickup. Listings that don't state it only stay if you choose no preference."
     },
     "roof": {
       "prompt": "Do you want a convertible?",
@@ -223,7 +250,8 @@
             "field": "body",
             "eq": "convertible"
           },
-          "next": "rear_seats"
+          "next": "rear_seats",
+          "about": "The roof folds down."
         },
         {
           "label": "No, a hardtop coupe",
@@ -231,14 +259,17 @@
             "field": "body",
             "eq": "coupe"
           },
-          "next": "rear_seats"
+          "next": "rear_seats",
+          "about": "A fixed roof and two doors."
         },
         {
           "label": "Either is fine",
           "where": {},
-          "next": "rear_seats"
+          "next": "rear_seats",
+          "about": "Keeps both coupes and convertibles."
         }
-      ]
+      ],
+      "about": "A convertible folds the roof. A coupe is the fixed-roof version."
     },
     "rear_seats": {
       "prompt": "Do you need back seats?",
@@ -257,14 +288,17 @@
               }
             ]
           },
-          "next": "power"
+          "next": "power",
+          "about": "Drops cars EPA calls two-seaters, unless NHTSA lists 4 or more seats."
         },
         {
           "label": "No, two seats is fine",
           "where": {},
-          "next": "power"
+          "next": "power",
+          "about": "Seat count does not filter the list."
         }
-      ]
+      ],
+      "about": "Some sports cars seat only two. 'Yes' keeps a car EPA does not call a two-seater, or that NHTSA lists with 4 or more seats."
     },
     "power": {
       "prompt": "What powertrain do you want?",
@@ -277,7 +311,8 @@
               "electric"
             ]
           },
-          "next": "ev_range"
+          "next": "ev_range",
+          "about": "No gas engine. The next question is driving range."
         },
         {
           "label": "Hybrid or plug-in hybrid",
@@ -288,7 +323,8 @@
               "plug-in hybrid"
             ]
           },
-          "next": "mpg"
+          "next": "mpg",
+          "about": "A gas engine plus a battery. A plug-in can drive a short distance on electricity alone."
         },
         {
           "label": "Any electrified (hybrid, plug-in, EV, fuel cell)",
@@ -301,7 +337,8 @@
               "fuel cell"
             ]
           },
-          "next": "mpg"
+          "next": "mpg",
+          "about": "Hybrid, plug-in, battery-electric, or hydrogen fuel cell."
         },
         {
           "label": "Gas or diesel (no electrification)",
@@ -312,14 +349,17 @@
               "diesel"
             ]
           },
-          "next": "mpg"
+          "next": "mpg",
+          "about": "No hybrid system and no plug."
         },
         {
           "label": "No preference",
           "where": {},
-          "next": "mpg"
+          "next": "mpg",
+          "about": "Keeps every powertrain still available."
         }
-      ]
+      ],
+      "about": "Taken from the listing's fuel type, and checked against EPA for that model year."
     },
     "ev_range": {
       "prompt": "How much EPA-rated range do you need?",
@@ -330,7 +370,8 @@
             "field": "ev_range",
             "gte": 300
           },
-          "next": "drive"
+          "next": "drive",
+          "about": "The longest EPA ranges. Fewer charging stops on a trip."
         },
         {
           "label": "250+ miles",
@@ -338,7 +379,8 @@
             "field": "ev_range",
             "gte": 250
           },
-          "next": "drive"
+          "next": "drive",
+          "about": "Enough for most days, with some highway range to spare."
         },
         {
           "label": "200+ miles",
@@ -346,17 +388,20 @@
             "field": "ev_range",
             "gte": 200
           },
-          "next": "drive"
+          "next": "drive",
+          "about": "A full charge covers a long day. Road trips need more planning."
         },
         {
           "label": "Any range",
           "where": {},
-          "next": "drive"
+          "next": "drive",
+          "about": "Range does not filter the list."
         }
-      ]
+      ],
+      "about": "Official miles on a full charge, for the longest version of that model year. Cold weather and highway speed shorten it."
     },
     "mpg": {
-      "prompt": "How important is fuel economy? (EPA combined MPG, best version)",
+      "prompt": "How important is fuel economy?",
       "options": [
         {
           "label": "Very: 40+ MPG",
@@ -364,7 +409,8 @@
             "field": "mpg_combined_max",
             "gte": 40
           },
-          "next": "drive"
+          "next": "drive",
+          "about": "Mostly hybrids, plus a few small gas cars."
         },
         {
           "label": "Somewhat: 30+ MPG",
@@ -372,7 +418,8 @@
             "field": "mpg_combined_max",
             "gte": 30
           },
-          "next": "drive"
+          "next": "drive",
+          "about": "A typical efficient car. Many compacts qualify."
         },
         {
           "label": "At least 20 MPG",
@@ -380,20 +427,23 @@
             "field": "mpg_combined_max",
             "gte": 20
           },
-          "next": "drive"
+          "next": "drive",
+          "about": "Drops only the thirstiest engines."
         },
         {
           "label": "Don't care",
           "where": {},
-          "next": "drive"
+          "next": "drive",
+          "about": "Fuel economy does not filter the list."
         }
-      ]
+      ],
+      "about": "EPA combined city and highway MPG, using the most efficient version of that model year. A hybrid can set the number even when a gas version is thirstier."
     },
     "drive": {
-      "prompt": "Do you need AWD or 4WD (snow, rain, dirt roads, boat ramps)?",
+      "prompt": "Which drivetrain do you need?",
       "options": [
         {
-          "label": "Yes, AWD or 4WD",
+          "label": "All-wheel or four-wheel drive",
           "where": {
             "field": "drivetrain",
             "in": [
@@ -401,14 +451,376 @@
               "4WD"
             ]
           },
-          "next": "safety"
+          "next": "price",
+          "about": "Power can reach all four wheels. Useful in rain or snow. It usually costs more and uses more fuel."
         },
         {
-          "label": "No, front- or rear-wheel drive is fine",
+          "label": "Front-wheel drive",
+          "where": {
+            "field": "drivetrain",
+            "eq": "FWD"
+          },
+          "next": "price",
+          "about": "The front wheels pull the car. Common on cars and minivans."
+        },
+        {
+          "label": "Rear-wheel drive",
+          "where": {
+            "field": "drivetrain",
+            "eq": "RWD"
+          },
+          "next": "price",
+          "about": "The rear wheels push the car. Common on sports cars and some trucks."
+        },
+        {
+          "label": "Any drivetrain",
           "where": {},
-          "next": "safety"
+          "next": "price",
+          "about": "Drivetrain does not filter the list."
         }
-      ]
+      ],
+      "about": "Which wheels the engine turns. This is separate from automatic or manual."
+    },
+    "price": {
+      "prompt": "What's the most you want a typical used example to cost in California?",
+      "options": [
+        {
+          "label": "Under $15,000",
+          "where": {
+            "field": "price_typical",
+            "lte": 15000
+          },
+          "next": "year",
+          "about": "Usually an older model year. A nearly new car rarely qualifies."
+        },
+        {
+          "label": "Under $25,000",
+          "where": {
+            "field": "price_typical",
+            "lte": 25000
+          },
+          "next": "year",
+          "about": "Recent efficient cars start to appear here."
+        },
+        {
+          "label": "Under $40,000",
+          "where": {
+            "field": "price_typical",
+            "lte": 40000
+          },
+          "next": "year",
+          "about": "Covers most non-luxury model years, including many nearly new ones."
+        },
+        {
+          "label": "Under $60,000",
+          "where": {
+            "field": "price_typical",
+            "lte": 60000
+          },
+          "next": "year",
+          "about": "Drops only the most expensive model years."
+        },
+        {
+          "label": "Any price",
+          "where": {},
+          "next": "year",
+          "about": "Price does not filter the list."
+        }
+      ],
+      "about": "The median asking price for that model year among used and certified cars in California. Not a price for one specific car."
+    },
+    "year": {
+      "prompt": "How new does it need to be?",
+      "options": [
+        {
+          "label": "2022 or newer",
+          "where": {
+            "field": "year",
+            "gte": 2022
+          },
+          "next": "fuel_cost",
+          "about": "Recent cars. Prices are higher, and mileages are usually lower."
+        },
+        {
+          "label": "2018 or newer",
+          "where": {
+            "field": "year",
+            "gte": 2018
+          },
+          "next": "fuel_cost",
+          "about": "Drops the oldest cars and still includes many under $25,000."
+        },
+        {
+          "label": "2012 or newer",
+          "where": {
+            "field": "year",
+            "gte": 2012
+          },
+          "next": "fuel_cost",
+          "about": "Most of the cars in this list from the last decade and a half."
+        },
+        {
+          "label": "Any model year",
+          "where": {},
+          "next": "fuel_cost",
+          "about": "Model years 2005 through 2026."
+        }
+      ],
+      "about": "Each model year stays separate, so an older generation can fit a budget without hiding the new one."
+    },
+    "fuel_cost": {
+      "prompt": "What's the most you want to spend on fuel in a year?",
+      "options": [
+        {
+          "label": "Under $1,500",
+          "where": {
+            "field": "annual_fuel_cost",
+            "lte": 1500
+          },
+          "next": "mileage",
+          "about": "Mostly hybrids, plug-in hybrids, and electric cars."
+        },
+        {
+          "label": "Under $2,000",
+          "where": {
+            "field": "annual_fuel_cost",
+            "lte": 2000
+          },
+          "next": "mileage",
+          "about": "Efficient gas cars qualify here too."
+        },
+        {
+          "label": "Under $2,500",
+          "where": {
+            "field": "annual_fuel_cost",
+            "lte": 2500
+          },
+          "next": "mileage",
+          "about": "Drops the heavier and more powerful engines."
+        },
+        {
+          "label": "Any fuel cost",
+          "where": {},
+          "next": "mileage",
+          "about": "Yearly fuel cost does not filter the list."
+        }
+      ],
+      "about": "EPA's yearly estimate for the cheapest version, at its standard miles and fuel price. Your bill depends on how far you drive."
+    },
+    "mileage": {
+      "prompt": "What's the most mileage you want on a typical example?",
+      "options": [
+        {
+          "label": "Under 30,000 miles",
+          "where": {
+            "field": "mileage_typical",
+            "lte": 30000
+          },
+          "next": "transmission",
+          "about": "Mostly recent model years."
+        },
+        {
+          "label": "Under 60,000 miles",
+          "where": {
+            "field": "mileage_typical",
+            "lte": 60000
+          },
+          "next": "transmission",
+          "about": "A common line for a used car that is still fairly fresh."
+        },
+        {
+          "label": "Under 100,000 miles",
+          "where": {
+            "field": "mileage_typical",
+            "lte": 100000
+          },
+          "next": "transmission",
+          "about": "Leaves out the highest-mile examples of older years."
+        },
+        {
+          "label": "Any mileage",
+          "where": {},
+          "next": "transmission",
+          "about": "Mileage does not filter the list."
+        }
+      ],
+      "about": "The median odometer reading on California listings for that model year. Newer years usually have fewer miles."
+    },
+    "transmission": {
+      "prompt": "What transmission do you want?",
+      "options": [
+        {
+          "label": "Manual",
+          "where": {
+            "field": "transmission",
+            "eq": "manual"
+          },
+          "next": "cargo",
+          "about": "You shift gears yourself. Fewer of these are listed."
+        },
+        {
+          "label": "Automatic",
+          "where": {
+            "field": "transmission",
+            "eq": "automatic"
+          },
+          "next": "cargo",
+          "about": "The car shifts, or it is electric and has one speed."
+        },
+        {
+          "label": "Either",
+          "where": {},
+          "next": "cargo",
+          "about": "Includes cars whose transmission was not listed."
+        }
+      ],
+      "about": "Automatic includes CVTs and the single-speed gearboxes in electric cars. A manual has a clutch. Cars with no gearbox listed only stay under Either."
+    },
+    "cargo": {
+      "prompt": "How much cargo space do you need?",
+      "options": [
+        {
+          "label": "A lot: 20+ cubic feet",
+          "where": {
+            "field": "cargo_cuft",
+            "gte": 20
+          },
+          "next": "brand",
+          "about": "Hatchbacks and wagons more often than sedans."
+        },
+        {
+          "label": "At least 15 cubic feet",
+          "where": {
+            "field": "cargo_cuft",
+            "gte": 15
+          },
+          "next": "brand",
+          "about": "A normal trunk, or anything larger."
+        },
+        {
+          "label": "At least 10 cubic feet",
+          "where": {
+            "field": "cargo_cuft",
+            "gte": 10
+          },
+          "next": "brand",
+          "about": "Drops only the smallest cargo areas EPA measured."
+        },
+        {
+          "label": "No preference",
+          "where": {},
+          "next": "brand",
+          "about": "Includes vehicles EPA did not measure, such as many trucks and minivans."
+        }
+      ],
+      "about": "EPA luggage volume for the roomiest version. A sedan trunk is often about 15 cubic feet, and a hatchback often 20 or more. Pickups and minivans are often blank, because EPA does not require the number."
+    },
+    "brand": {
+      "prompt": "Any brand preference?",
+      "free_text": {
+        "field": "make",
+        "placeholder": "Or type a brand, such as Honda",
+        "next": "seats",
+        "about": "Matches the start of the make. Chevy, VW, and Mercedes are recognized."
+      },
+      "options": [
+        {
+          "label": "American brands",
+          "where": {
+            "field": "brand_region",
+            "eq": "american"
+          },
+          "next": "seats",
+          "about": "Ford, Chevrolet, GMC, Tesla, Jeep, Ram, and the other U.S.-based companies in this list."
+        },
+        {
+          "label": "Japanese brands",
+          "where": {
+            "field": "brand_region",
+            "eq": "japanese"
+          },
+          "next": "seats",
+          "about": "Toyota, Honda, Nissan, Mazda, Subaru, and their luxury brands."
+        },
+        {
+          "label": "Korean brands",
+          "where": {
+            "field": "brand_region",
+            "eq": "korean"
+          },
+          "next": "seats",
+          "about": "Hyundai, Kia, and Genesis."
+        },
+        {
+          "label": "European brands",
+          "where": {
+            "field": "brand_region",
+            "eq": "european"
+          },
+          "next": "seats",
+          "about": "BMW, Mercedes-Benz, Volkswagen, Audi, and the other Europe-based companies in this list."
+        },
+        {
+          "label": "No preference",
+          "where": {},
+          "next": "seats",
+          "about": "Brand does not filter the list."
+        }
+      ],
+      "about": "A country is where the company is based, not where that car was built. A Toyota built in California is still a Japanese brand. You can also type a name."
+    },
+    "seats": {
+      "prompt": "How many people does it need to seat?",
+      "options": [
+        {
+          "label": "6 or more",
+          "where": {
+            "any": [
+              {
+                "field": "body",
+                "eq": "minivan"
+              },
+              {
+                "field": "seats_min",
+                "gte": 6
+              }
+            ]
+          },
+          "next": "safety",
+          "about": "Minivans, or a model NHTSA lists with at least 6 seats."
+        },
+        {
+          "label": "4 or 5 is enough",
+          "where": {
+            "any": [
+              {
+                "field": "seats_min",
+                "gte": 4
+              },
+              {
+                "field": "body",
+                "in": [
+                  "sedan",
+                  "hatchback",
+                  "wagon",
+                  "minivan",
+                  "pickup",
+                  "van"
+                ]
+              }
+            ]
+          },
+          "next": "safety",
+          "about": "A small family. Two-seat sports cars drop out."
+        },
+        {
+          "label": "2 is fine",
+          "where": {},
+          "next": "safety",
+          "about": "Seat count does not filter the list."
+        }
+      ],
+      "about": "Seat counts come from NHTSA when they were recorded. A blank count is not guessed. Minivans count as 6 or more. Most cars count as 4 or 5 from the body style."
     },
     "safety": {
       "prompt": "What's the minimum NHTSA overall crash-test rating you'd accept?",
@@ -419,7 +831,8 @@
             "field": "overall_rating",
             "gte": 5
           },
-          "next": "adas"
+          "next": "adas",
+          "about": "Only model years where every tested version scored 5 stars."
         },
         {
           "label": "4 stars or better",
@@ -427,17 +840,20 @@
             "field": "overall_rating",
             "gte": 4
           },
-          "next": "adas"
+          "next": "adas",
+          "about": "4 or 5 stars. Unrated model years drop out."
         },
         {
           "label": "Any, including models NHTSA hasn't rated",
           "where": {},
-          "next": "adas"
+          "next": "adas",
+          "about": "Stars do not filter the list."
         }
-      ]
+      ],
+      "about": "The stars shown are the lowest score among versions tested that model year. An unrated model fails a minimum. It stays only if you allow unrated models."
     },
     "adas": {
-      "prompt": "Do you want forward collision warning AND lane departure warning as standard?",
+      "prompt": "Do you want forward collision warning and lane departure warning as standard?",
       "options": [
         {
           "label": "Yes, both standard",
@@ -453,14 +869,17 @@
               }
             ]
           },
-          "next": "recalls"
+          "next": "recalls",
+          "about": "Both warnings were standard equipment that model year."
         },
         {
           "label": "Not required",
           "where": {},
-          "next": "recalls"
+          "next": "recalls",
+          "about": "Driver-assist does not filter the list."
         }
-      ]
+      ],
+      "about": "Collision warning alerts you to a vehicle ahead. Lane warning alerts you when you drift. Standard means every tested version had it, not that it was an option."
     },
     "recalls": {
       "prompt": "How much do recalls matter to you?",
@@ -471,7 +890,8 @@
             "field": "recalls",
             "lte": 0
           },
-          "next": null
+          "next": null,
+          "about": "Keeps a model year only when NHTSA lists zero recalls."
         },
         {
           "label": "No more than 2 recalls",
@@ -479,14 +899,17 @@
             "field": "recalls",
             "lte": 2
           },
-          "next": null
+          "next": null,
+          "about": "Zero, one, or two recalls on the NHTSA record."
         },
         {
           "label": "Don't care",
           "where": {},
-          "next": null
+          "next": null,
+          "about": "Recalls do not filter the list."
         }
-      ]
+      ],
+      "about": "Recall counts come from NHTSA's new-car records. The used-car list does not include them, so this question is skipped there. A blank count is not treated as zero."
     }
   }
 }

@@ -44,13 +44,14 @@ body {
 /* Header ------------------------------------------------------------- */
 .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+@media (max-width: 560px) { .brand { flex-direction: column; align-items: flex-start; } }
 .sign {
   font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; letter-spacing: 0.04em;
   color: var(--sign-ink); background: var(--sign); border-radius: 8px;
   box-shadow: inset 0 0 0 2px var(--sign), inset 0 0 0 4px var(--sign-ink);
   padding: 7px 14px; white-space: nowrap;
 }
-.brand p { margin: 0; color: var(--muted); font-size: 0.9rem; max-width: 46ch; }
+.brand p { margin: 0; color: var(--muted); font-size: 0.92rem; max-width: 52ch; }
 .pop { color: var(--sign); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
 .pop:hover { text-decoration: underline; }
 
@@ -64,19 +65,44 @@ body {
 
 /* Question pane ------------------------------------------------------ */
 .ask { display: grid; gap: 14px; min-width: 0; }
-@media (min-width: 820px) { .ask { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); } }
+.skip-note { margin: -6px 0 0; color: var(--muted); font-size: 0.82rem; }
+@media (min-width: 820px) {
+  .ask {
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    max-height: calc(100vh - 24px); overflow: auto; padding-right: 4px;
+  }
+}
 .trail { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .trail button {
-  font: 500 0.8rem/1.2 var(--font-body); color: var(--sign); background: var(--sign-soft);
-  border: 1px solid transparent; border-radius: 999px; padding: 5px 10px; cursor: pointer;
+  font: 600 0.8rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--sign-ink);
+  background: var(--sign); border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--sign), inset 0 0 0 3px #fff;
 }
-.trail button:hover { border-color: var(--sign); }
-.trail button span { color: var(--muted); }
-.question { display: grid; gap: 12px; }
+.trail button:hover { filter: brightness(1.08); }
+.trail button span { color: var(--sign-ink); }
+/* A question is a guide sign: green field, white legend, white inner border. */
+.question[hidden], .versus[hidden] { display: none; }
+.question {
+  display: grid; gap: 12px; min-width: 0; color: var(--sign-ink); background: var(--sign);
+  border-radius: 10px; padding: 18px 16px 16px;
+  box-shadow: inset 0 0 0 3px var(--sign), inset 0 0 0 6px #fff;
+}
+.step { margin: 0; color: var(--sign-ink); font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
 .question h2 {
-  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.75rem; line-height: 1.1;
-  text-wrap: balance;
+  margin: 0; min-width: 0; color: var(--sign-ink); font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(1.45rem, 5vw, 1.9rem); line-height: 1.05; letter-spacing: 0.01em;
+  text-wrap: wrap; overflow-wrap: break-word;
 }
+.why { margin: 0; }
+.why summary {
+  cursor: pointer; color: var(--sign); font-size: 0.82rem; font-weight: 600; width: fit-content;
+}
+.question .why summary,
+.question .why summary::marker { color: var(--sign-ink); }
+.why p { margin: 6px 0 0; color: var(--muted); font-size: 0.88rem; max-width: 62ch; }
+.question .why p { color: #f4fbf7; }
+.choice { display: grid; gap: 4px; }
+.choice .why { padding: 0 4px 2px; }
 .options { display: grid; gap: 8px; }
 .opt {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
@@ -84,11 +110,34 @@ body {
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius);
   padding: 12px 14px; cursor: pointer; transition: border-color 0.12s, background 0.12s;
 }
+.question .opt {
+  color: var(--sign-ink); background: transparent; border-color: rgba(255, 255, 255, 0.55); border-radius: 4px;
+}
 .opt:hover { border-color: var(--sign); background: var(--sign-soft); }
+.question .opt:hover { border-color: #fff; background: rgba(255, 255, 255, 0.14); }
 .opt .n { flex: none; color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
-.done { background: var(--sign-soft); border-radius: var(--radius); padding: 14px; }
-.done h2 { margin: 0 0 4px; font-family: var(--font-display); font-size: 1.5rem; }
-.done p { margin: 0; color: var(--muted); }
+.question .opt .n { color: var(--sign-ink); font-family: var(--font-display); font-weight: 700; letter-spacing: 0.02em; }
+.question .opt::after {
+  content: ""; flex: none; width: 8px; height: 8px; margin-right: 2px;
+  border-right: 2px solid currentColor; border-top: 2px solid currentColor; transform: rotate(45deg);
+}
+.brand-row { display: flex; gap: 8px; }
+.brand-row input {
+  flex: 1; min-width: 0; font: 500 0.98rem/1.3 var(--font-body); color: var(--ink);
+  background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: 12px 14px;
+}
+.brand-row button { flex: none; width: auto; }
+.hint { margin: 0; color: var(--warn); font-size: 0.88rem; }
+.question .hint { color: #ffe08a; }
+.done {
+  color: var(--sign-ink); background: var(--sign); border-radius: 10px; padding: 16px;
+  box-shadow: inset 0 0 0 3px var(--sign), inset 0 0 0 6px #fff;
+}
+.done h2 { margin: 0 0 4px; color: var(--sign-ink); font-family: var(--font-display); font-size: 1.5rem; }
+.done p { margin: 0; color: #f4fbf7; }
+.question button:focus-visible, .question summary:focus-visible, .done :focus-visible {
+  outline: 3px solid #ffe14a; outline-offset: 2px;
+}
 .controls { display: flex; gap: 8px; flex-wrap: wrap; }
 .ghost {
   font: 600 0.88rem/1 var(--font-body); color: var(--ink); background: transparent;
@@ -104,25 +153,28 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
 .results-head p { margin: 0; color: var(--muted); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 
-/* A result card reads like a window sticker: name bar, then the figures buyers compare. */
-.card { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
+/* Name bar is a small guide sign. The figures stay on white, like the sheet under the sign. */
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
 .card-top {
-  display: flex; align-items: baseline; gap: 10px; padding: 10px 14px;
-  border-bottom: 2px solid var(--ink);
+  display: flex; align-items: baseline; gap: 10px; margin: 8px 8px 0; padding: 8px 12px;
+  color: var(--sign-ink); background: var(--sign); border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--sign), inset 0 0 0 4px #fff;
 }
-.rank { font-family: var(--font-display); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank { font-family: var(--font-display); font-weight: 700; color: var(--sign-ink); font-variant-numeric: tabular-nums; }
 .card h3 {
-  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 1.3rem; line-height: 1.15;
-  letter-spacing: 0.02em; min-width: 0; overflow-wrap: anywhere;
+  margin: 0; color: var(--sign-ink); font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; line-height: 1.1;
+  letter-spacing: 0.03em; min-width: 0; overflow-wrap: anywhere;
 }
 .meta { margin: 0; padding: 8px 14px 0; color: var(--muted); font-size: 0.86rem; }
 .figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 10px 14px; gap: 10px; }
 @media (max-width: 420px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .fig { display: grid; gap: 2px; min-width: 0; }
 .num {
-  font-family: var(--font-display); font-weight: 700; font-size: 1.6rem; line-height: 1;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+  font-family: var(--font-display); font-weight: 700; font-size: 1.45rem; line-height: 1.05;
+  font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
 }
+.figures.more { padding-top: 0; }
+.figures.more .num { font-size: 1.15rem; }
 .num.none { color: var(--muted); font-size: 1.1rem; line-height: 1.45; }
 .stars { color: var(--star); font-size: 1.15rem; letter-spacing: 0.06em; line-height: 1.4; white-space: nowrap; }
 .stars .off { color: var(--rule); }
@@ -137,6 +189,63 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
 .more { justify-self: start; }
 .empty, .error { color: var(--muted); background: var(--card); border: 1px dashed var(--rule); border-radius: var(--radius); padding: 16px; margin: 0; }
 
+/* Versus screen: a game status panel beside the guide signs. */
+.versus {
+  display: grid; gap: 12px; color: #f4fff8; background: #102018; border-radius: 12px; padding: 16px;
+  box-shadow: inset 0 0 0 2px #102018, inset 0 0 0 5px #e2b15a;
+}
+.versus-kicker {
+  margin: 0; font: 700 0.8rem/1 var(--font-display); letter-spacing: 0.16em; color: #e2b15a;
+}
+.versus h2 {
+  margin: 0; color: #f4fff8; font-family: var(--font-display); font-weight: 700;
+  font-size: clamp(1.35rem, 4vw, 1.7rem); line-height: 1.05; letter-spacing: 0.03em;
+}
+.versus-lead, .versus-note { margin: 0; color: #d5e4db; font-size: 0.88rem; }
+.splash { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.side-label { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: #b7c9be; }
+.fighter {
+  margin: 0; min-width: 0; color: #7dffb3; font: 700 clamp(1.25rem, 4vw, 1.75rem)/1.05 var(--font-display);
+  letter-spacing: 0.02em; overflow-wrap: anywhere;
+}
+.fighter.suv { color: #e2b15a; }
+.vs { margin: 0; font: 700 1.35rem/1 var(--font-display); letter-spacing: 0.14em; color: #e2b15a; }
+.versus-picks { display: grid; gap: 8px; }
+@media (min-width: 640px) { .versus-picks { grid-template-columns: 1fr 1fr; } }
+.pick-label { margin: 0 0 4px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: #b7c9be; }
+.picks { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick {
+  font: 700 0.95rem/1.1 var(--font-display); letter-spacing: 0.03em; color: #f4fff8;
+  background: transparent; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 4px;
+  padding: 7px 10px; cursor: pointer; text-align: left;
+}
+.pick small { display: block; font: 600 0.68rem/1.2 var(--font-body); letter-spacing: 0.08em; text-transform: uppercase; color: #b7c9be; }
+.pick[aria-pressed="true"] { border-color: #7dffb3; box-shadow: inset 0 0 0 1px #7dffb3; }
+.pick.suv[aria-pressed="true"] { border-color: #e2b15a; box-shadow: inset 0 0 0 1px #e2b15a; }
+.bars { display: grid; gap: 10px; }
+.stat { display: grid; gap: 4px; }
+.stat-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.stat-head span:first-child { font: 700 0.95rem/1 var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+.sense { color: #b7c9be; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; }
+.edge {
+  color: #102018; background: #e2b15a; font: 700 0.72rem/1 var(--font-display);
+  letter-spacing: 0.08em; padding: 3px 6px; border-radius: 2px;
+}
+.lane { display: grid; grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.82rem; }
+.track { height: 12px; background: rgba(255, 255, 255, 0.12); border-radius: 2px; overflow: hidden; }
+.fill { display: block; height: 100%; width: 0; }
+.fill.car { background: #7dffb3; }
+.fill.suv { background: #e2b15a; }
+.lane .val { font: 700 0.95rem/1 var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.buffs { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.buffs li {
+  font: 700 0.85rem/1.2 var(--font-display); letter-spacing: 0.03em; color: #102018;
+  background: #7dffb3; border-radius: 2px; padding: 4px 8px;
+}
+.versus :focus-visible { outline: 3px solid #ffe14a; outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .fill { transition: width 0.35s ease; } }
+
 /* Footer ------------------------------------------------------------- */
 .sources { border-top: 1px solid var(--rule); padding-top: 12px; color: var(--muted); font-size: 0.8rem; display: grid; gap: 4px; }
 .sources p { margin: 0; max-width: 90ch; }
@@ -148,7 +257,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
   <header class="bar">
     <div class="brand">
       <span class="sign">NOT AN SUV</span>
-      <p>Answer a few questions to find a car, minivan or pickup that fits your life. SUVs and crossovers are left out.</p>
+      <p>Answer a few questions about how you use a vehicle. The matches are cars, minivans, and pickups, including older model years. SUVs and crossovers are left out.</p>
     </div>
     <a class="pop" id="pop" href="#" target="_blank" rel="noopener" hidden>Open full screen ↗</a>
   </header>
@@ -156,9 +265,13 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
   <div class="layout">
     <section class="ask" aria-labelledby="ask-title">
       <h2 class="pane-title" id="ask-title">Your needs</h2>
+      <p class="skip-note">A question is skipped when every answer would leave the same vehicles.</p>
       <ol class="trail" id="trail" aria-label="Your answers so far"></ol>
       <div class="question" id="question">
+        <p class="step" id="step"></p>
         <h2 id="prompt">Loading vehicle data…</h2>
+        <div id="q-about"></div>
+        <div id="free-text"></div>
         <div class="options" id="options"></div>
       </div>
       <div class="done" id="done" hidden>
@@ -176,6 +289,26 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
         <h2 class="pane-title" id="results-title">Top matches</h2>
         <p id="count"></p>
       </div>
+      <section class="versus" id="versus" hidden aria-labelledby="versus-title">
+        <p class="versus-kicker">Versus</p>
+        <h2 id="versus-title">Your match, compared with a common SUV</h2>
+        <p class="versus-lead" id="versus-lead"></p>
+        <div class="splash">
+          <div>
+            <p class="side-label">Your match</p>
+            <p class="fighter" id="fighter-car"></p>
+          </div>
+          <p class="vs" aria-hidden="true">VS</p>
+          <div>
+            <p class="side-label">Common SUV</p>
+            <p class="fighter suv" id="fighter-suv"></p>
+          </div>
+        </div>
+        <div class="versus-picks" id="versus-picks"></div>
+        <div class="bars" id="versus-bars"></div>
+        <ul class="buffs" id="versus-buffs"></ul>
+        <p class="versus-note" id="versus-note"></p>
+      </section>
       <ol class="list" id="list"></ol>
       <button class="ghost more" id="more" type="button" hidden>Show more</button>
     </section>
@@ -183,7 +316,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
 
   <footer class="sources">
     <p id="source-line">Data: NHTSA crash-test ratings and vehicle records, and EPA fueleconomy.gov.</p>
-    <p>Ranked by NHTSA overall stars, then standard driver-assist, then fewest recalls, then best MPG. A vehicle is listed only when EPA or NHTSA states its powertrain. Seat counts come from NHTSA VIN records; when versions of a model differ, the range is shown. Values a source doesn't provide are shown as not listed, never estimated.</p>
+    <p id="price-note" hidden></p>
+    <p>Ranked by NHTSA overall stars, then standard driver-assist, then fewest recalls, then best MPG. The star rating is the lowest tested version of that model year. A vehicle is listed only when its powertrain is stated. Values a source doesn't provide are shown as not listed, never estimated.</p>
   </footer>
 </div>
 
@@ -200,8 +334,28 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
     gas: "Gas", diesel: "Diesel", hybrid: "Hybrid", "plug-in hybrid": "Plug-in hybrid",
     electric: "Electric", "fuel cell": "Fuel cell"
   };
+  const TRANS_NAMES = { automatic: "Automatic", manual: "Manual" };
+  // Keep in sync with vehicle_finder/catalog.py MAKE_ALIASES.
+  const MAKE_ALIASES = { CHEVY: "CHEVROLET", VW: "VOLKSWAGEN", BENZ: "MERCEDESBENZ", MERCEDES: "MERCEDESBENZ" };
   const $ = (id) => document.getElementById(id);
-  let tree = null, vehicles = [], answers = [], shown = PAGE;
+  let tree = null, vehicles = [], rivals = [], answers = [], shown = PAGE;
+  let versusCarKey = "", versusSuvKey = "";
+  const ROLE_NAMES = {
+    compact: "Compact", "three-row": "Three rows", "off-road": "Off-road",
+    midsize: "Midsize", electric: "Electric"
+  };
+
+  function money(n) {
+    return "$" + n.toLocaleString("en-US");
+  }
+
+  function median(values) {
+    if (!values.length) return null;
+    const ordered = values.slice().sort((a, b) => a - b);
+    const mid = Math.floor(ordered.length / 2);
+    if (ordered.length % 2) return ordered[mid];
+    return Math.round((ordered[mid - 1] + ordered[mid]) / 2);
+  }
 
   // ---- Same rules as vehicle_finder/decision_tree.py ------------------
   function matches(cond, v) {
@@ -219,6 +373,18 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
     return false;
   }
 
+  function norm(text) {
+    return (text || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  }
+
+  function textMatches(vehicle, field, query) {
+    if (field !== "make") return false;
+    const wanted = MAKE_ALIASES[norm(query)] || norm(query);
+    if (wanted.length < 2) return false;
+    const name = norm(vehicle.make);
+    return name.length > 0 && (name.startsWith(wanted) || wanted.startsWith(name));
+  }
+
   // Replays the answers through the tree: hides options with no matches and
   // skips questions whose answers wouldn't narrow anything.
   function walk() {
@@ -233,10 +399,21 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
       if (viable.every((x) => x.sub.length === remaining.length)) { nodeId = viable[0].o.next; continue; }
       if (i < answers.length) {
         const pick = viable.find((x) => x.o.label === answers[i]);
-        if (!pick) { answers = answers.slice(0, i); return { remaining, q, viable, trail }; }
-        trail.push({ prompt: q.prompt, label: pick.o.label });
-        remaining = pick.sub; nodeId = pick.o.next; i++;
-        continue;
+        if (pick) {
+          trail.push({ prompt: q.prompt, label: pick.o.label });
+          remaining = pick.sub; nodeId = pick.o.next; i++;
+          continue;
+        }
+        if (q.free_text) {
+          const sub = remaining.filter((v) => textMatches(v, q.free_text.field, answers[i]));
+          if (sub.length) {
+            trail.push({ prompt: q.prompt, label: answers[i] });
+            remaining = sub; nodeId = q.free_text.next; i++;
+            continue;
+          }
+        }
+        answers = answers.slice(0, i);
+        return { remaining, q, viable, trail };
       }
       return { remaining, q, viable, trail };
     }
@@ -244,44 +421,69 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
   }
 
   // ---- Ranking: one entry per make/model -------------------------------
+  function summarize(trims) {
+    const nums = (arr) => arr.filter((x) => typeof x === "number");
+    const ratings = nums(trims.map((t) => t.overall_rating));
+    const lo = nums(trims.map((t) => t.mpg_combined_min));
+    const hi = nums(trims.map((t) => t.mpg_combined_max));
+    const ranges = nums(trims.map((t) => t.ev_range));
+    const costs = nums(trims.map((t) => t.annual_fuel_cost));
+    const seatLo = nums(trims.map((t) => t.seats_min));
+    const seatHi = nums(trims.map((t) => t.seats_max));
+    const priceLo = nums(trims.map((t) => t.price_low));
+    const priceHi = nums(trims.map((t) => t.price_high));
+    const typicals = nums(trims.map((t) => t.price_typical)).sort((a, b) => a - b);
+    const mileages = nums(trims.map((t) => t.mileage_typical)).sort((a, b) => a - b);
+    const cargoHi = nums(trims.map((t) => t.cargo_cuft));
+    const cargoLo = nums(trims.map((t) => t.cargo_cuft_min));
+    const passengers = nums(trims.map((t) => t.passenger_cuft));
+    const weights = nums(trims.map((t) => t.curb_weight_lb));
+    const listings = trims.reduce((sum, t) => sum + (t.n_listings || 0), 0);
+    const seatTrim = trims.find((t) => t.sources && t.sources.seats);
+    const bestEpa = trims.reduce((a, b) => ((b.mpg_combined_max || 0) > (a.mpg_combined_max || 0) ? b : a));
+    return {
+      year: trims[0].year, make: trims[0].make, model: trims[0].model,
+      bodies: [...new Set(trims.map((t) => t.body))],
+      powertrains: [...new Set(trims.flatMap((t) => t.powertrains))].sort(),
+      drivetrains: [...new Set(trims.map((t) => t.drivetrain).filter(Boolean))].sort(),
+      transmissions: [...new Set(trims.map((t) => t.transmission).filter(Boolean))].sort(),
+      rating: ratings.length ? Math.max(...ratings) : null,
+      adas: trims.some((t) => t.forward_collision_warning === "Standard" && t.lane_departure_warning === "Standard"),
+      recalls: trims.some((t) => typeof t.recalls === "number")
+        ? Math.max(...trims.map((t) => t.recalls).filter((n) => typeof n === "number"))
+        : null,
+      complaints: Math.max(...trims.map((t) => t.complaints || 0)),
+      mpgLo: lo.length ? Math.min(...lo) : null,
+      mpgHi: hi.length ? Math.max(...hi) : null,
+      range: ranges.length ? Math.max(...ranges) : null,
+      cost: costs.length ? Math.min(...costs) : null,
+      seatsLo: seatLo.length ? Math.min(...seatLo) : null,
+      seatsHi: seatHi.length ? Math.max(...seatHi) : null,
+      priceLo: priceLo.length ? Math.min(...priceLo) : null,
+      priceHi: priceHi.length ? Math.max(...priceHi) : null,
+      priceTypical: typicals.length ? typicals[Math.floor(typicals.length / 2)] : null,
+      mileageTypical: mileages.length ? mileages[Math.floor(mileages.length / 2)] : null,
+      cargoLo: cargoLo.length ? Math.min(...cargoLo) : null,
+      cargoHi: cargoHi.length ? Math.max(...cargoHi) : null,
+      passenger: passengers.length ? Math.max(...passengers) : null,
+      curb: median(weights),
+      role: trims[0].role || null,
+      nListings: listings,
+      seatsUrl: seatTrim ? seatTrim.sources.seats : null,
+      epaUrl: bestEpa.sources.epa,
+      nhtsaUrl: trims[0].sources.nhtsa,
+      trims: trims.length
+    };
+  }
+
   function recommend(list) {
     const groups = new Map();
     for (const v of list) {
-      const key = v.make + "|" + v.model;
+      const key = v.year + "|" + v.make + "|" + v.model;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(v);
     }
-    const nums = (arr) => arr.filter((x) => typeof x === "number");
-    const recs = [...groups.values()].map((trims) => {
-      const ratings = nums(trims.map((t) => t.overall_rating));
-      const lo = nums(trims.map((t) => t.mpg_combined_min));
-      const hi = nums(trims.map((t) => t.mpg_combined_max));
-      const ranges = nums(trims.map((t) => t.ev_range));
-      const costs = nums(trims.map((t) => t.annual_fuel_cost));
-      const seatLo = nums(trims.map((t) => t.seats_min));
-      const seatHi = nums(trims.map((t) => t.seats_max));
-      const seatTrim = trims.find((t) => t.sources.seats);
-      const bestEpa = trims.reduce((a, b) => ((b.mpg_combined_max || 0) > (a.mpg_combined_max || 0) ? b : a));
-      return {
-        make: trims[0].make, model: trims[0].model, body: trims[0].body,
-        powertrains: [...new Set(trims.flatMap((t) => t.powertrains))].sort(),
-        drivetrains: [...new Set(trims.map((t) => t.drivetrain).filter(Boolean))].sort(),
-        rating: ratings.length ? Math.max(...ratings) : null,
-        adas: trims.some((t) => t.forward_collision_warning === "Standard" && t.lane_departure_warning === "Standard"),
-        recalls: Math.max(...trims.map((t) => t.recalls || 0)),
-        complaints: Math.max(...trims.map((t) => t.complaints || 0)),
-        mpgLo: lo.length ? Math.min(...lo) : null,
-        mpgHi: hi.length ? Math.max(...hi) : null,
-        range: ranges.length ? Math.max(...ranges) : null,
-        cost: costs.length ? Math.min(...costs) : null,
-        seatsLo: seatLo.length ? Math.min(...seatLo) : null,
-        seatsHi: seatHi.length ? Math.max(...seatHi) : null,
-        seatsUrl: seatTrim ? seatTrim.sources.seats : null,
-        epaUrl: bestEpa.sources.epa,
-        nhtsaUrl: trims[0].sources.nhtsa,
-        trims: trims.length
-      };
-    });
+    const recs = [...groups.values()].map(summarize);
     const score = (r) => [r.rating || 0, r.adas ? 1 : 0, -r.recalls, r.mpgHi || 0, -r.complaints];
     recs.sort((a, b) => {
       const sa = score(a), sb = score(b);
@@ -322,27 +524,48 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
   function card(r, rank) {
     const li = el("li", "card");
     const top = el("div", "card-top");
-    top.append(el("span", "rank", String(rank)), el("h3", null, r.make + " " + r.model));
+    top.append(el("span", "rank", String(rank)), el("h3", null, r.year + " " + r.make + " " + r.model));
     li.append(top);
 
     const seats = r.seatsLo === null ? "Seats not listed"
       : (r.seatsLo === r.seatsHi ? r.seatsLo : r.seatsLo + "–" + r.seatsHi) + " seats";
-    const meta = [BODY_NAMES[r.body] || r.body, r.drivetrains.join(" / "), r.powertrains.map((p) => POWER_NAMES[p] || p).join(" / "), seats]
-      .filter(Boolean).join(" · ");
-    li.append(el("p", "meta", meta));
+    const metaParts = [
+      r.bodies.map((b) => BODY_NAMES[b] || b).join(" / "),
+      r.drivetrains.join(" / "),
+      r.transmissions.map((t) => TRANS_NAMES[t] || t).join(" / "),
+      r.powertrains.map((p) => POWER_NAMES[p] || p).join(" / "),
+      seats
+    ];
+    if (r.priceLo !== null && r.priceHi !== null && r.priceLo !== r.priceHi) {
+      metaParts.push(money(r.priceLo) + "–" + money(r.priceHi) + " asking");
+    }
+    if (r.nListings) metaParts.push("from " + r.nListings.toLocaleString("en-US") + " California listings");
+    li.append(el("p", "meta", metaParts.filter(Boolean).join(" · ")));
 
     const figs = el("div", "figures");
     const ev = r.powertrains.length === 1 && r.powertrains[0] === "electric";
     const mpg = r.mpgHi === null ? null : (r.mpgLo !== null && r.mpgLo !== r.mpgHi ? r.mpgLo + "–" + r.mpgHi : String(r.mpgHi));
+    if (r.priceTypical !== null) figs.append(figure(money(r.priceTypical), "Typical CA price"));
     figs.append(figure(mpg, ev ? "MPGe combined" : "MPG combined"));
     figs.append(figure(r.rating, "NHTSA overall", true));
-    if (r.range !== null) figs.append(figure(r.range + " mi", ev ? "EPA range" : "Electric range"));
-    else figs.append(figure(r.cost === null ? null : "$" + r.cost.toLocaleString("en-US"), "Fuel / year, from"));
     li.append(figs);
+    const extra = el("div", "figures more");
+    if (r.range !== null) extra.append(figure(r.range + " mi", ev ? "EPA range" : "Electric range"));
+    if (r.cost !== null) extra.append(figure(money(r.cost), "Fuel / year, from"));
+    if (r.mileageTypical !== null) extra.append(figure(r.mileageTypical.toLocaleString("en-US") + " mi", "Typical mileage"));
+    if (r.cargoHi !== null) {
+      const cargo = r.cargoLo !== null && r.cargoLo !== r.cargoHi ? r.cargoLo + "–" + r.cargoHi : String(r.cargoHi);
+      extra.append(figure(cargo + " cu ft", "Cargo volume"));
+    }
+    if (extra.childElementCount) li.append(extra);
 
     const flags = el("ul", "flags");
     flags.append(el("li", r.adas ? "good" : "", r.adas ? "Collision + lane warning standard" : "Driver-assist not both standard"));
-    flags.append(el("li", r.recalls ? "warn" : "good", r.recalls === 0 ? "No recalls" : r.recalls + (r.recalls === 1 ? " recall" : " recalls")));
+    if (r.recalls === null || r.recalls === undefined) {
+      flags.append(el("li", "", "Recalls not listed"));
+    } else {
+      flags.append(el("li", r.recalls ? "warn" : "good", r.recalls === 0 ? "No recalls" : r.recalls + (r.recalls === 1 ? " recall" : " recalls")));
+    }
     if (r.complaints) flags.append(el("li", "", r.complaints + " owner complaints"));
     li.append(flags);
 
@@ -364,6 +587,259 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
     return li;
   }
 
+  function brandEntry(spec, remaining) {
+    const row = el("form", "brand-row");
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = spec.placeholder || "Type a brand";
+    input.setAttribute("aria-label", "Brand");
+    input.autocomplete = "off";
+    const go = el("button", "opt", "Use this brand");
+    go.type = "submit";
+    const hint = el("p", "hint", "");
+    hint.hidden = true;
+    const matched = () => {
+      const wanted = (input.value || "").trim();
+      if (norm(wanted).length < 2) return 0;
+      return new Set(remaining.filter((v) => textMatches(v, spec.field, wanted))
+        .map((v) => v.year + "|" + v.make + "|" + v.model)).size;
+    };
+    const refresh = () => {
+      const n = matched();
+      go.textContent = norm(input.value).length < 2
+        ? "Use this brand"
+        : "Use this brand · " + n + (n === 1 ? " model year" : " model years");
+      return n;
+    };
+    input.addEventListener("input", () => { hint.hidden = true; refresh(); });
+    row.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const typed = input.value.trim();
+      if (norm(typed).length < 2) {
+        hint.hidden = false;
+        hint.textContent = "Type at least two letters of the brand.";
+        return;
+      }
+      if (!refresh()) {
+        hint.hidden = false;
+        hint.textContent = "No brand matches that. Try the full name, such as Chevrolet.";
+        return;
+      }
+      answers = answers.concat(typed);
+      shown = PAGE;
+      render();
+    });
+    row.append(input, go);
+    refresh();
+    const wrap = el("div", "choice");
+    wrap.append(row, hint);
+    if (spec.about) wrap.append(disclosure("What typing does", spec.about));
+    return wrap;
+  }
+
+  function electricOnly(rec) {
+    return rec.powertrains.length === 1 && rec.powertrains[0] === "electric";
+  }
+
+  function rivalFamilies() {
+    const byModel = new Map();
+    for (const row of rivals) {
+      const key = norm(row.make) + "|" + norm(row.model);
+      if (!byModel.has(key)) byModel.set(key, []);
+      byModel.get(key).push(row);
+    }
+    return [...byModel.values()].map((rows) => {
+      return {
+        key: norm(rows[0].make) + "|" + norm(rows[0].model),
+        role: rows[0].role,
+        make: rows[0].make,
+        model: rows[0].model,
+        listings: rows.reduce((sum, row) => sum + (row.n_listings || 0), 0),
+        rows
+      };
+    }).sort((a, b) => b.listings - a.listings);
+  }
+
+  function rivalFor(family, car) {
+    // Same model year when we have it, and the same powertrain when the SUV
+    // was sold that way. A gas Civic is not compared with a hybrid RAV4's MPG.
+    const years = [...new Set(family.rows.map((row) => row.year))];
+    const year = years.sort((a, b) => {
+      const gap = Math.abs(a - car.year) - Math.abs(b - car.year);
+      if (gap) return gap;
+      const count = (y) => family.rows.filter((row) => row.year === y)
+        .reduce((sum, row) => sum + (row.n_listings || 0), 0);
+      return count(b) - count(a);
+    })[0];
+    let rows = family.rows.filter((row) => row.year === year);
+    const wanted = new Set(car.powertrains);
+    const same = rows.filter((row) => (row.powertrains || []).some((kind) => wanted.has(kind)));
+    if (same.length) rows = same;
+    return summarize(rows);
+  }
+
+  function chooseSuvs(answerText, car) {
+    const families = rivalFamilies();
+    const picked = families.slice(0, 4);
+    let slot = picked.length - 1;
+    const ensure = (role) => {
+      const found = families.find((family) => family.role === role);
+      if (!found || picked.some((family) => family.key === found.key) || slot < 0) return;
+      picked[slot] = found;
+      slot -= 1;
+    };
+    if (answerText.indexOf("electric") !== -1 || electricOnly(car)) ensure("electric");
+    if (answerText.indexOf("6 or more") !== -1) ensure("three-row");
+    return picked;
+  }
+
+  function comparisonStats(car, suv) {
+    const rows = [];
+    const add = (row) => {
+      if (row.car === null || row.suv === null || row.car <= 0 || row.suv <= 0) return;
+      rows.push(row);
+    };
+    const mixedEnergy = electricOnly(car) !== electricOnly(suv);
+    if (!mixedEnergy) {
+      add({
+        label: "Fuel economy", higher: true, car: car.mpgHi, suv: suv.mpgHi,
+        text: (n) => n + (electricOnly(car) ? " MPGe" : " mpg"),
+        buff: (edge) => "+" + edge + (electricOnly(car) ? " MPGe" : " mpg")
+      });
+    }
+    add({
+      label: electricOnly(car) || electricOnly(suv) ? "Energy per year" : "Fuel per year",
+      higher: false, car: car.cost, suv: suv.cost,
+      text: (n) => money(n) + "/yr",
+      buff: (edge) => "−" + money(edge) + "/yr"
+    });
+    add({
+      label: "Asking price", higher: false, car: car.priceTypical, suv: suv.priceTypical,
+      text: money,
+      buff: (edge) => "−" + money(edge) + " to buy"
+    });
+    add({
+      label: "Curb weight", higher: false, car: car.curb, suv: suv.curb,
+      text: (n) => n.toLocaleString("en-US") + " lb",
+      buff: (edge) => "−" + edge.toLocaleString("en-US") + " lb"
+    });
+    add({
+      label: "Cabin size", higher: false, car: car.passenger, suv: suv.passenger,
+      text: (n) => n + " cu ft",
+      buff: (edge) => "−" + edge + " cu ft of cabin"
+    });
+    add({
+      label: "Cargo", higher: true, car: car.cargoHi, suv: suv.cargoHi,
+      text: (n) => n + " cu ft",
+      buff: (edge) => "+" + edge + " cu ft cargo"
+    });
+    return rows;
+  }
+
+  function renderVersus(recs) {
+    const panel = $("versus");
+    const cars = recs.slice(0, 3);
+    if (!cars.length || !rivals.length) {
+      panel.hidden = true;
+      return;
+    }
+    const families = chooseSuvs(answers.join(" | ").toLowerCase(), cars[0]);
+    if (!families.length) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    if (!cars.some((rec) => rec.year + "|" + rec.make + "|" + rec.model === versusCarKey)) {
+      versusCarKey = cars[0].year + "|" + cars[0].make + "|" + cars[0].model;
+    }
+    if (!families.some((family) => family.key === versusSuvKey)) versusSuvKey = families[0].key;
+    const car = cars.find((rec) => rec.year + "|" + rec.make + "|" + rec.model === versusCarKey);
+    const family = families.find((item) => item.key === versusSuvKey);
+    const suv = rivalFor(family, car);
+
+    $("versus-lead").textContent = "People often buy the " + family.model + " instead of the "
+      + car.year + " " + car.make + " " + car.model
+      + ". These bars use the same California asking prices, EPA fuel figures, and NHTSA curb weight. A bar is drawn only when both have that figure.";
+    $("fighter-car").textContent = car.year + " " + car.make + " " + car.model;
+    $("fighter-suv").textContent = suv.year + " " + suv.make + " " + suv.model;
+
+    const carPicks = el("div");
+    carPicks.append(el("p", "pick-label", "Your match"));
+    const carRow = el("div", "picks");
+    for (const rec of cars) {
+      const key = rec.year + "|" + rec.make + "|" + rec.model;
+      const button = el("button", "pick", rec.model);
+      button.type = "button";
+      button.append(el("small", null, String(rec.year)));
+      button.setAttribute("aria-pressed", key === versusCarKey ? "true" : "false");
+      button.addEventListener("click", () => { versusCarKey = key; render(); });
+      carRow.append(button);
+    }
+    carPicks.append(carRow);
+    const suvPicks = el("div");
+    suvPicks.append(el("p", "pick-label", "SUV you might have bought"));
+    const suvRow = el("div", "picks");
+    for (const item of families) {
+      const button = el("button", "pick suv");
+      button.type = "button";
+      button.append(item.model, el("small", null, ROLE_NAMES[item.role] || "SUV"));
+      button.setAttribute("aria-pressed", item.key === versusSuvKey ? "true" : "false");
+      button.addEventListener("click", () => { versusSuvKey = item.key; render(); });
+      suvRow.append(button);
+    }
+    suvPicks.append(suvRow);
+    $("versus-picks").replaceChildren(carPicks, suvPicks);
+
+    const motion = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const bars = [];
+    const buffs = [];
+    const tradeoffs = [];
+    for (const stat of comparisonStats(car, suv)) {
+      const block = el("div", "stat");
+      const head = el("div", "stat-head");
+      head.append(el("span", null, stat.label));
+      const carWins = stat.higher ? stat.car > stat.suv : stat.car < stat.suv;
+      const suvWins = stat.higher ? stat.suv > stat.car : stat.suv < stat.car;
+      if (!stat.higher) head.append(el("span", "sense", "lower is better"));
+      if (carWins) head.append(el("span", "edge", "Your edge"));
+      else if (suvWins) head.append(el("span", "edge", "SUV edge"));
+      block.append(head);
+      const scale = Math.max(stat.car, stat.suv);
+      for (const side of [["car", car.model, stat.car], ["suv", suv.model, stat.suv]]) {
+        const lane = el("div", "lane");
+        const track = el("span", "track");
+        const fill = el("span", "fill " + side[0]);
+        const width = Math.round(side[2] / scale * 100) + "%";
+        if (motion) requestAnimationFrame(() => { fill.style.width = width; });
+        else fill.style.width = width;
+        track.append(fill);
+        lane.append(el("span", "who", side[1]), track, el("span", "val", stat.text(side[2])));
+        block.append(lane);
+      }
+      bars.push(block);
+      const edge = Math.abs(stat.car - stat.suv);
+      if (carWins) buffs.push(stat.buff(edge));
+      else if (suvWins) tradeoffs.push(stat.label.toLowerCase() + " (" + stat.text(stat.suv) + " vs " + stat.text(stat.car) + ")");
+    }
+    $("versus-bars").replaceChildren(...bars);
+    $("versus-buffs").replaceChildren(...buffs.map((text) => el("li", null, text)));
+    const note = [];
+    if (buffs.length) note.push("Choosing the " + car.make + " " + car.model + " wins the green tags above.");
+    if (tradeoffs.length) note.push("The " + suv.model + " leads on " + tradeoffs.join(", ") + ".");
+    if (!bars.length) note.push("These two don't share a figure we can put on a bar. Nothing is estimated.");
+    else note.push("Nothing on this panel is estimated.");
+    $("versus-note").textContent = note.join(" ");
+  }
+
+  function disclosure(summary, text) {
+    const details = document.createElement("details");
+    details.className = "why";
+    const label = document.createElement("summary");
+    label.textContent = summary;
+    details.append(label, el("p", null, text));
+    return details;
+  }
+
   function render() {
     const state = walk();
     const qBox = $("question"), done = $("done"), opts = $("options");
@@ -381,25 +857,42 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
       return li;
     }));
 
+    const free = $("free-text");
+    const about = $("q-about");
+    free.replaceChildren();
+    about.replaceChildren();
     if (state.q) {
       qBox.hidden = false; done.hidden = true;
+      $("step").textContent = "Question " + (state.trail.length + 1);
       $("prompt").textContent = state.q.prompt;
+      if (state.q.about) about.append(disclosure("Why we ask", state.q.about));
+      if (state.q.free_text) free.append(brandEntry(state.q.free_text, state.remaining));
       opts.replaceChildren(...state.viable.map(({ o, sub }) => {
+        const choice = el("div", "choice");
         const b = el("button", "opt");
         b.type = "button";
-        const models = new Set(sub.map((v) => v.make + "|" + v.model)).size;
-        b.append(el("span", null, o.label), el("span", "n", models + (models === 1 ? " model" : " models")));
+        const models = new Set(sub.map((v) => v.year + "|" + v.make + "|" + v.model)).size;
+        b.append(el("span", null, o.label), el("span", "n", models + (models === 1 ? " model year" : " model years")));
         b.addEventListener("click", () => { answers = answers.concat(o.label); shown = PAGE; render(); });
-        return b;
+        choice.append(b);
+        if (o.about) choice.append(disclosure("What this means", o.about));
+        return choice;
       }));
     } else {
       qBox.hidden = true; done.hidden = false;
+      $("step").textContent = "";
     }
 
     const recs = recommend(state.remaining);
-    $("count").textContent = recs.length + (recs.length === 1 ? " model" : " models") + " match";
+    const noun = recs.length === 1 ? "model year" : "model years";
+    $("count").textContent = recs.length + " non-SUV " + noun + " fit";
     $("results-title").textContent = state.q ? "Top matches so far" : "Your matches";
-    $("done-text").textContent = "Here are the " + recs.length + " models that fit everything you asked for. Change any answer above to see different options.";
+    $("done-text").textContent = "These " + recs.length + " model years meet what you asked for, and none of them are SUVs. "
+      + (rivals.length
+        ? "Compare the top match with a common SUV in the panel with your matches. Change an answer above to see different options."
+        : "Change an answer above to see different options.");
+    if (state.q) $("versus").hidden = true;
+    else renderVersus(recs);
     const list = $("list");
     if (recs.length === 0) {
       list.replaceChildren(el("li", "empty", "Nothing matches every answer. Remove one of your answers above."));
@@ -433,8 +926,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--sign); outline-
     .then(([data, t]) => {
       tree = t;
       vehicles = data.vehicles;
+      rivals = data.rivals || [];
+      const multi = String(data.model_year).indexOf("-") !== -1;
       $("source-line").textContent =
-        "Model year " + data.model_year + ". Data: NHTSA crash-test ratings and vehicle records, and EPA fueleconomy.gov, collected " + data.generated + ".";
+        (multi ? "Model years " : "Model year ") + data.model_year +
+        ". Data: NHTSA crash-test ratings, EPA fueleconomy.gov" +
+        (data.price_basis ? ", and California used-listing summaries for price, mileage and transmission" : "") +
+        ", collected " + data.generated + ".";
+      const note = $("price-note");
+      if (data.price_basis) { note.hidden = false; note.textContent = data.price_basis; }
       render();
     })
     .catch(() => {

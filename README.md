@@ -41,13 +41,24 @@ republished. Licensed data added later may not be, so check its terms first.
 ## Running it from a terminal
 
 ```
-python3 main.py                # interactive questionnaire (default: last model year)
-python3 main.py --year 2024    # a different model year
+python3 main.py --market-csv listings.csv --export-site docs
+python3 main.py                # new-car questionnaire for the latest model year
+python3 main.py --year 2024    # a different model year, crash-tested trims only
 python3 main.py --show-tree    # print the full decision tree
-python3 main.py --stats        # catalog stats, incl. what was excluded as a crossover
-python3 main.py --refresh      # rebuild the catalog from the API
 python3 -m unittest            # offline tests
 ```
+
+That builds the Google Sites version from California used listings: every
+model year from 2005 through 2026 with at least 10 used or certified
+listings, EPA fuel economy and cargo volume for that year, and NHTSA stars
+when the model was crash-tested. The page asks what the vehicle is for, then
+fuel economy, drivetrain, price, model year, yearly fuel cost, mileage,
+transmission, cargo space, brand, seats and safety. SUVs and crossovers are
+not in the list. A brand can be a home country (American, Japanese, Korean,
+European) or a name typed in. The country is where the company is based, not
+where the car was assembled.
+Publish `docs/` with GitHub Pages and embed that URL in Google Sites.
+The CSV itself is not uploaded.
 
 Only the Python standard library is needed (Python 3.9+).
 
@@ -57,7 +68,7 @@ Only the Python standard library is needed (Python 3.9+).
 | --- | --- |
 | [NCAP Safety Ratings](https://api.nhtsa.gov/SafetyRatings) | Every crash-tested trim: body style + drivetrain (parsed from descriptions like `CIVIC SEDAN 4 DR FWD`), overall stars, rollover risk, standard forward-collision / lane-departure warning, recall and complaint counts |
 | [vPIC](https://vpic.nhtsa.dot.gov/api/) `GetModelsForMakeYear` | Official vehicle type (Passenger Car / MPV / Truck), used to catch crossovers that NCAP labels as wagons or hatchbacks |
-| [fueleconomy.gov](https://www.fueleconomy.gov/feg/ws/) EPA dataset | Combined/city/highway MPG (MPGe for EVs), EV and plug-in electric range, annual fuel cost, real powertrain type (gas / hybrid / plug-in / EV / fuel cell / diesel), and EPA size class |
+| [fueleconomy.gov](https://www.fueleconomy.gov/feg/ws/) EPA dataset | Combined/city/highway MPG (MPGe for EVs), EV and plug-in electric range, annual fuel cost, luggage volume, real powertrain type (gas / hybrid / plug-in / EV / fuel cell / diesel), and EPA size class |
 
 fueleconomy.gov has a per-vehicle REST API and a bulk download of the same
 dataset. We use the bulk file (`vehicles.csv.zip`, about 2 MB): one request
@@ -106,8 +117,10 @@ What will you mainly use it for?
 ├─ Fun → convertible? → back seats? ──┤   (coupes / convertibles)
 └─ Not sure → any body style ─────────┤
                                       ▼
-        Powertrain → EV range (EVs) or MPG (others) → AWD/4WD? → minimum crash rating
-        → standard driver-assist? → recall tolerance → ranked results
+        Powertrain → EV range (EVs) or MPG (others) → drivetrain → price → how new
+        → yearly fuel cost → mileage → transmission → cargo volume → brand
+        → seats → minimum crash rating → standard driver-assist? → recall tolerance
+        → ranked results
 ```
 
 * Each option shows how many vehicles it would leave, and options that would
@@ -139,9 +152,28 @@ The questions live in `vehicle_finder/tree.json`. Each option has a
   plus the MINI Hardtop/Convertible and Audi A6/S6 e-tron. `--stats` lists
   them. EPA labels some mild hybrids (e.g. 48-volt Audis and BMWs) as
   "Hybrid", so the MPG question is the better filter for efficiency.
-* Only vehicles NHTSA has crash-tested for that year are included. NCAP
-  covers most of the US market, but not every niche or exotic model.
-* No pricing. Neither source provides it.
+* **No individual sale listings.** With `--market-csv`, price and mileage
+  are the 25th–75th percentile for that model year among used and certified
+  vehicles in California. Transmission is automatic or manual (CVT counts as
+  automatic). Seller names, phones, VINs, photos, colors, leather, and
+  vehicle-history flags are not kept. Cars with fewer than 10 listings are
+  left out.
+* **Cargo volume is EPA luggage volume**, in cubic feet, and only when EPA
+  reports it. That covers most cars and few pickups or minivans. A missing
+  number is left blank rather than estimated from a truck bed.
+* **The finished page can compare the top match with a common SUV** such as
+  a RAV4, CR-V, or Wrangler. Price and mileage use the same California
+  listing summaries. Fuel figures are EPA. Curb weight is the middle NHTSA
+  crash-test weight. Cabin size is shown only when EPA lists passenger
+  volume for both, which it usually does not for SUVs. A missing figure is
+  left off the chart rather than estimated.
+* **Brand country is the company's home**, not the assembly plant. Honda is
+  Japanese even when a Civic was built in Ohio. A typed name matches the
+  start of the make, plus a few short names such as Chevy and VW.
+* Only vehicles NHTSA has crash-tested for that year get a star rating.
+  The rating shown is the lowest tested version of that model year.
+  Recall counts are not in the bulk ratings file, so they stay unlisted
+  for the used-market catalog.
 
 ## Layout
 

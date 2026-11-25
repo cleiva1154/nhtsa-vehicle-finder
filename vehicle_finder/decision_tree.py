@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-from .catalog import Vehicle
+from .catalog import Vehicle, make_matches
 
 Filter = Callable[[Vehicle], bool]
 ANY: Filter = lambda v: True
@@ -38,6 +38,7 @@ class Question:
     id: str
     prompt: str
     options: list[Option]
+    free_text: dict | None = None  # {"field", "placeholder", "next"} for a typed answer
 
 
 TREE_FILE = Path(__file__).with_name("tree.json")
@@ -75,14 +76,14 @@ def build_tree(path: Path = TREE_FILE) -> dict[str, Question]:
         qid: Question(qid, q["prompt"], [
             Option(o["label"], (lambda v, c=o["where"]: matches(c, v)), o["next"])
             for o in q["options"]
-        ])
+        ], q.get("free_text"))
         for qid, q in data["questions"].items()
     }
 
 
 # --------------------------------------------------------------------- engine
-# ask(question, [(label, matching_count), ...]) -> index of the chosen option
-AskFn = Callable[[Question, list[tuple[str, int]]], int]
+# ask(...) -> option index, or the typed text when the question allows it
+AskFn = Callable[[Question, list[tuple[str, int]]], int | str]
 
 
 @dataclass
@@ -113,8 +114,19 @@ def run(tree: dict[str, Question], vehicles: list[Vehicle], ask: AskFn,
             node_id = viable[0][0].next
             continue
 
-        idx = ask(question, [(opt.label, len(subset)) for opt, subset in viable])
-        opt, subset = viable[idx]
+        choice = ask(question, [(opt.label, len(subset)) for opt, subset in viable])
+        if isinstance(choice, str):
+            spec = question.free_text or {}
+            typed = choice.strip()
+            subset = [v for v in session.remaining if make_matches(v.make, typed)]
+            if not subset or spec.get("field") != "make":
+                print(f"No brand matches {typed!r}.")
+                continue
+            session.answers.append((question.prompt, typed))
+            session.remaining = subset
+            node_id = spec.get("next")
+            continue
+        opt, subset = viable[choice]
         session.answers.append((question.prompt, opt.label))
         session.remaining = subset
         node_id = opt.next
@@ -125,6 +137,7 @@ def run(tree: dict[str, Question], vehicles: list[Vehicle], ask: AskFn,
 # --------------------------------------------------------------- recommending
 @dataclass
 class Recommendation:
+    year: int
     make: str
     model: str
     body: str
@@ -141,11 +154,19 @@ class Recommendation:
     ev_range: Optional[int]
     annual_fuel_cost: Optional[int]
     epa_url: Optional[str]
+    price_low: Optional[int]
+    price_typical: Optional[int]
+    price_high: Optional[int]
+    mileage_typical: Optional[int]
+    transmissions: list[str]
+    cargo_cuft: Optional[int]
     trims: list[Vehicle]
 
     @property
     def name(self) -> str:
-        return f"{self.make.title()} {self.model.title()}"
+        make = self.make.title() if self.make.isupper() else self.make
+        model = self.model.title() if self.model.isupper() else self.model
+        return f"{self.year} {make} {model}"
 
     def score(self) -> tuple:
         # Higher is better: stars, then standard driver-assist, then fewer
@@ -155,13 +176,17 @@ class Recommendation:
 
 
 def recommend(vehicles: list[Vehicle], top: int = 10) -> list[Recommendation]:
-    """Collapse trims into one row per make/model and rank them."""
-    groups: dict[tuple[str, str], list[Vehicle]] = defaultdict(list)
+    """Collapse trims into one row per model year and rank them.
+
+    Different years stay separate, so a cheap older generation is not merged
+    into the current one.
+    """
+    groups: dict[tuple[int, str, str], list[Vehicle]] = defaultdict(list)
     for v in vehicles:
-        groups[(v.make, v.model)].append(v)
+        groups[(v.year, v.make, v.model)].append(v)
 
     recs = []
-    for (make, model), trims in groups.items():
+    for (year, make, model), trims in groups.items():
         ratings = [t.overall_rating for t in trims if t.overall_rating]
         mpg_lo = [t.mpg_combined_min for t in trims if t.mpg_combined_min]
         mpg_hi = [t.mpg_combined_max for t in trims if t.mpg_combined_max]
@@ -169,16 +194,24 @@ def recommend(vehicles: list[Vehicle], top: int = 10) -> list[Recommendation]:
         costs = [t.annual_fuel_cost for t in trims if t.annual_fuel_cost]
         seat_lo = [t.seats_min for t in trims if t.seats_min]
         seat_hi = [t.seats_max for t in trims if t.seats_max]
+        recalls = [t.recalls for t in trims if t.recalls is not None]
+        complaints = [t.complaints for t in trims if t.complaints is not None]
+        prices_lo = [t.price_low for t in trims if t.price_low]
+        prices_hi = [t.price_high for t in trims if t.price_high]
+        typicals = sorted(t.price_typical for t in trims if t.price_typical)
+        mileages = sorted(t.mileage_typical for t in trims if t.mileage_typical)
+        cargos = [t.cargo_cuft for t in trims if t.cargo_cuft]
         best_epa = max(trims, key=lambda t: t.mpg_combined_max or 0)
         recs.append(Recommendation(
+            year=year,
             make=make,
             model=model,
             body=trims[0].body,
             powertrains=sorted({p for t in trims for p in t.powertrains}),
             drivetrains=sorted({t.drivetrain for t in trims if t.drivetrain}),
             best_rating=max(ratings) if ratings else None,
-            recalls=max(t.recalls for t in trims),
-            complaints=max(t.complaints for t in trims),
+            recalls=max(recalls) if recalls else 0,
+            complaints=max(complaints) if complaints else 0,
             standard_adas=any(t.forward_collision_warning == "Standard"
                               and t.lane_departure_warning == "Standard" for t in trims),
             seats_min=min(seat_lo) if seat_lo else None,
@@ -188,6 +221,12 @@ def recommend(vehicles: list[Vehicle], top: int = 10) -> list[Recommendation]:
             ev_range=max(ranges) if ranges else None,
             annual_fuel_cost=min(costs) if costs else None,
             epa_url=best_epa.epa_url,
+            price_low=min(prices_lo) if prices_lo else None,
+            price_typical=typicals[len(typicals) // 2] if typicals else None,
+            price_high=max(prices_hi) if prices_hi else None,
+            mileage_typical=mileages[len(mileages) // 2] if mileages else None,
+            transmissions=sorted({t.transmission for t in trims if t.transmission}),
+            cargo_cuft=max(cargos) if cargos else None,
             trims=trims,
         ))
     recs.sort(key=lambda r: r.make + r.model)            # ties: alphabetical
@@ -208,6 +247,8 @@ def describe_tree(tree: dict[str, Question], start: str = "start") -> str:
             return
         seen.add(node_id)
         lines.append(f"{pad}[{node_id}] {q.prompt}")
+        if q.free_text:
+            lines.append(f"{pad}  - or type a brand")
         for opt in q.options:
             lines.append(f"{pad}  - {opt.label}")
             if opt.next:

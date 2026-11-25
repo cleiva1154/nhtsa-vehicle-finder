@@ -76,8 +76,8 @@ class Vehicle:
     rollover_risk: float | None  # probability of rollover in single-vehicle crash
     forward_collision_warning: str | None  # Standard | Optional | None
     lane_departure_warning: str | None
-    recalls: int = 0
-    complaints: int = 0
+    recalls: int | None = 0
+    complaints: int | None = 0
     is_suv_or_crossover: bool = field(default=False)
     powertrain_source: str | None = None  # where ``powertrain`` came from
 
@@ -99,9 +99,35 @@ class Vehicle:
     seats_source: str | None = None
     seats_source_url: str | None = None
 
+    # Approximate California used-market price for this model year. None for
+    # the new-car catalog. Never a single listing's asking price.
+    price_low: int | None = None       # 25th percentile, USD
+    price_typical: int | None = None   # median, USD
+    price_high: int | None = None      # 75th percentile, USD
+    n_listings: int | None = None
+
+    # Typical odometer reading for this used model year. None when unknown.
+    mileage_low: int | None = None
+    mileage_typical: int | None = None
+    mileage_high: int | None = None
+    transmission: str | None = None    # automatic|manual; CVT counts as automatic
+    cargo_cuft_min: int | None = None  # EPA luggage volume, smallest matched version
+    cargo_cuft: int | None = None      # EPA luggage volume, roomiest matched version
+    passenger_cuft: int | None = None  # EPA passenger volume, roomiest matched version
+    curb_weight_lb: int | None = None  # NHTSA crash-test curb weight; None if unlisted
+    compare_role: str | None = None    # set only on common-SUV comparison rows
+
     @property
     def all_wheel_drive(self) -> bool:
         return self.drivetrain in ("AWD", "4WD")
+
+    @property
+    def brand_region(self) -> str | None:
+        """Where the company is based: american, japanese, korean, or european.
+
+        This is not the factory. A Honda built in Ohio is still a Japanese brand.
+        """
+        return BRAND_REGION.get(normalize(self.make))
 
     @property
     def name(self) -> str:
@@ -111,6 +137,45 @@ class Vehicle:
 # ----------------------------------------------------------------- parsing
 def normalize(name: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", name.upper())
+
+
+# Home country of the brand, not the assembly plant. Keys are normalized makes.
+_BRAND_GROUPS = {
+    "american": (
+        "Ford", "Lincoln", "Chevrolet", "GMC", "Cadillac", "Buick", "Chrysler",
+        "Dodge", "Jeep", "Ram", "Tesla", "Rivian", "Lucid", "Pontiac", "Saturn",
+        "Mercury", "Hummer", "Oldsmobile",
+    ),
+    "japanese": (
+        "Toyota", "Lexus", "Honda", "Acura", "Nissan", "Infiniti", "Mazda",
+        "Subaru", "Mitsubishi", "Scion", "Suzuki", "Isuzu",
+    ),
+    "korean": ("Hyundai", "Kia", "Genesis"),
+    "european": (
+        "BMW", "Mercedes-Benz", "Audi", "Volkswagen", "Porsche", "Volvo", "Mini",
+        "Jaguar", "Land Rover", "Fiat", "Alfa Romeo", "Maserati", "Ferrari",
+        "Bentley", "Rolls-Royce", "Aston Martin", "Lotus", "Polestar", "Saab",
+        "Smart", "McLaren", "Lamborghini",
+    ),
+}
+BRAND_REGION = {normalize(make): region for region, makes in _BRAND_GROUPS.items() for make in makes}
+
+# Short names people type. Keep in sync with the same map in web/finder.html.
+MAKE_ALIASES = {
+    "CHEVY": "CHEVROLET",
+    "VW": "VOLKSWAGEN",
+    "BENZ": "MERCEDESBENZ",
+    "MERCEDES": "MERCEDESBENZ",
+}
+
+
+def make_matches(make: str, query: str) -> bool:
+    """True when ``query`` is the start of the make, or a known short name."""
+    wanted = MAKE_ALIASES.get(normalize(query), normalize(query))
+    if len(wanted) < 2:
+        return False
+    name = normalize(make)
+    return bool(name) and (name.startswith(wanted) or wanted.startswith(name))
 
 
 def parse_description(description: str) -> dict:
